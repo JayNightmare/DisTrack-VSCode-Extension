@@ -1,26 +1,64 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
+import axios from "axios";
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+let startTime: Date | null = null;
+
 export function activate(context: vscode.ExtensionContext) {
+    // Register commands
+    let startCommand = vscode.commands.registerCommand(
+        "extension.startCoding",
+        startCodingSession
+    );
+    let stopCommand = vscode.commands.registerCommand(
+        "extension.stopCoding",
+        stopCodingSession
+    );
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "DisTrack" is now active!');
+    context.subscriptions.push(startCommand, stopCommand);
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('DisTrack.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from Discord VSCode Tracker!');
-	});
-
-	context.subscriptions.push(disposable);
+    // Automatically start tracking upon activation if preferred
+    startCodingSession();
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+function startCodingSession() {
+    if (!startTime) {
+        startTime = new Date();
+        vscode.window.showInformationMessage("Started coding session!");
+    } else {
+        vscode.window.showInformationMessage(
+            "Coding session is already running!"
+        );
+    }
+}
+
+function stopCodingSession() {
+    if (startTime) {
+        const endTime = new Date();
+        const duration = (endTime.getTime() - startTime.getTime()) / 1000; // duration in seconds
+        sendToDiscord(duration);
+        startTime = null; // Reset session start
+    } else {
+        vscode.window.showWarningMessage("No coding session to stop!");
+    }
+}
+
+async function sendToDiscord(duration: number) {
+    try {
+        await axios.post("YOUR_DISCORD_BOT_ENDPOINT", {
+            user: vscode.env.machineId, // Using machineId to uniquely identify the user
+            duration: duration,
+        });
+        vscode.window.showInformationMessage(
+            `Coding time of ${duration} seconds sent to Discord!`
+        );
+    } catch (error) {
+        vscode.window.showErrorMessage(
+            `Failed to send coding time to Discord: ${error.message}`
+        );
+    }
+}
+
+export function deactivate() {
+    // Stop coding session on deactivation to capture last session
+    stopCodingSession();
+}
