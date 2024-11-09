@@ -1,8 +1,6 @@
 import axios from "axios";
 import * as vscode from "vscode";
 
-console.log("--------\nVSCode Machine ID:", vscode.env.machineId);
-
 const endpointUrl = "";
 
 export async function sendSessionData(duration: number) {
