@@ -10,7 +10,9 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": ["*"],
+  "activationEvents": [
+    "*"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -44,6 +46,7 @@
     "test": "vscode-test"
   },
   "devDependencies": {
+    "@types/discord-rpc": "^4.0.8",
     "@types/mocha": "^10.0.9",
     "@types/node": "20.x",
     "@types/vscode": "^1.95.0",
@@ -59,6 +62,7 @@
   },
   "dependencies": {
     "axios": "^1.7.7",
+    "discord-rpc": "^4.0.1",
     "dotenv": "^16.4.5"
   }
 }
