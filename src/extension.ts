@@ -92,7 +92,7 @@ export async function deactivate() {
 function startSessionTimer() {
     statusBarTimer.show();
     sessionTimerInterval = setInterval(() => {
-        const elapsed = new Date().getTime() - (sessionStartTime?.getTime() || 0);
+        const elapsed = new Date().getTime() - (sessionStartTime?.getTime() ?? 0);
         const hours = Math.floor((elapsed / (1000 * 60 * 60)) % 24);
         const minutes = Math.floor((elapsed / (1000 * 60)) % 60);
         const seconds = Math.floor((elapsed / 1000) % 60);
