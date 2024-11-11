@@ -1,18 +1,17 @@
-Here’s a basic structure for a `README.md` file for your VSCode extension. This file includes sections on setup, usage, features, and contributing:
-
-```markdown
 # VSCode Coding Tracker Extension
 
 This Visual Studio Code extension helps you track and analyze your coding sessions by integrating with Discord and logging coding activity to a MongoDB database. It displays your active coding time, language usage, and various achievements through a dedicated Discord bot.
 
 ## Table of Contents
-- [Features](#features)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-- [Commands](#commands)
-- [Contributing](#contributing)
-- [License](#license)
+- [VSCode Coding Tracker Extension](#vscode-coding-tracker-extension)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+  - [Usage](#usage)
+  - [Commands](#commands)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Features
 
@@ -85,6 +84,3 @@ This Visual Studio Code extension helps you track and analyze your coding sessio
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
-```
-
-This `README.md` outlines installation steps, configuration, usage instructions, and contribution guidelines. Adjust any placeholder sections (like the MongoDB URI and GitHub link) as needed. Let me know if you'd like any additional details!
