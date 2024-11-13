@@ -17,9 +17,32 @@ export function activate(context: vscode.ExtensionContext) {
     const discordId = context.globalState.get<string>('discordId');
 
     if (discordId) {
-        // If Discord ID is already linked
         statusBar.text = "Connected to Discord";
         console.log(`<< Discord User ID is already linked: ${discordId} >>`);
+
+        // Incase they want to connect again
+        statusBar.command = "extension.linkToDiscord";
+        statusBar.tooltip = "Click to link your VSCode account to Discord";
+        console.log("<< Discord User ID not linked, prompting user... >>");
+
+        // Register the link to Discord command
+        context.subscriptions.push(
+            vscode.commands.registerCommand("extension.linkToDiscord", async () => {
+                const enteredDiscordId = await vscode.window.showInputBox({
+                    prompt: "Enter your Discord User ID to link it with VSCode",
+                    placeHolder: "Enter Discord User ID here",
+                });
+
+                if (enteredDiscordId) {
+                    context.globalState.update('discordId', enteredDiscordId);
+                    vscode.window.showInformationMessage("<< Discord User ID linked successfully! >>");
+                    statusBar.text = "Connected to Discord";
+                    console.log(`<< Discord User ID Added: ${enteredDiscordId} >>`);
+                } else {
+                    vscode.window.showErrorMessage("<< Discord ID is required to link your account >>");
+                }
+            })
+        );
     } else {
         // If Discord ID is not linked
         statusBar.text = "Link to Discord";
