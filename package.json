@@ -4,6 +4,10 @@
   "description": "This will track your time in VSCode. Add the bot to your server to check your progress!",
   "version": "0.4.7",
   "publisher": "JayNightmare",
+  "author": {
+		"name": "Jay",
+		"email": "jn3.enquiries@gmail.com"
+	},
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -15,6 +19,23 @@
   "categories": [
     "Other"
   ],
+  "bugs": {
+		"url": "https://github.com/JayNightmare/DisTrack-VSCode-Extension/issues"
+	},
+	"keywords": [
+		"discord",
+		"vscode",
+		"rich",
+		"presence",
+		"rich presence",
+		"rpc",
+    "time tracking",
+    "development",
+    "tracker",
+    "leaderboard",
+    "discord leaderboard"
+	],
+  "homepage": "https://github.com/JayNightmare/DisTrack-VSCode-Extension#readme",
   "activationEvents": [
     "*"
   ],
