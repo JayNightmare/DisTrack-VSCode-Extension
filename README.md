@@ -1,4 +1,13 @@
-# VSCode Coding Tracker Extension
+<div align=center>
+  <img src="images/distrack.png" width=225 radius=10 />
+</div>
+
+<div align=center>
+  <h1>
+    VSCode Coding Tracker Extension
+  </h1>
+</div>
+
 
 This Visual Studio Code extension helps you track and analyze your coding sessions by integrating with Discord and logging coding activity to a MongoDB database. It displays your active coding time, language usage, and various achievements through a dedicated Discord bot.
 
