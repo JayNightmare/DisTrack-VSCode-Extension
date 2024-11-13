@@ -42,7 +42,22 @@
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
-      
+      {
+        "command": "distrack.login",
+        "title": "Login to DisTrack"
+      },
+      {
+        "command": "distrack.logout",
+        "title": "Logout of DisTrack"
+      },
+      {
+        "command": "distrack.status",
+        "title": "Check your DisTrack status"
+      },
+      {
+        "command": "distrack.sync",
+        "title": "Sync your DisTrack status"
+      }
     ]
   },
   "scripts": {
