@@ -2,6 +2,8 @@
 
 This Visual Studio Code extension helps you track and analyze your coding sessions by integrating with Discord and logging coding activity to a MongoDB database. It displays your active coding time, language usage, and various achievements through a dedicated Discord bot.
 
+> Bot Invite: https://discord.com/oauth2/authorize?client_id=1305258645906526328
+
 ## Table of Contents
 - [VSCode Coding Tracker Extension](#vscode-coding-tracker-extension)
   - [Table of Contents](#table-of-contents)
@@ -25,26 +27,20 @@ This Visual Studio Code extension helps you track and analyze your coding sessio
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/yourusername/vscode-coding-tracker.git
+   git clone https://github.com/JayNightmare/DisTrack-VSCode-Extension
    ```
 2. **Install Dependencies**:
    ```bash
-   cd vscode-coding-tracker
+   cd DisTrack-VSCode-Extension
    npm install
    ```
 3. **Setup MongoDB**:
    - Ensure MongoDB is installed and running.
-   - Create a database named `vscode-tracker` and note the connection URI.
+   - Create a database and note the connection URI.
 
 ## Configuration
 
-1. **Set Environment Variables**:
-   - Create a `.env` file in the root directory with the following variables:
-     ```plaintext
-     MONGODB_URI=your_mongodb_connection_uri
-     DISCORD_CLIENT_ID=your_discord_application_client_id
-     ```
-2. **MongoDB Setup**:
+1. **MongoDB Setup**:
    - Ensure the IP address for your server is whitelisted in MongoDB Atlas or your MongoDB instance.
    
 ## Usage
@@ -56,13 +52,19 @@ This Visual Studio Code extension helps you track and analyze your coding sessio
    - Click on the status bar item "Link to Discord" and enter your Discord ID to enable activity tracking and achievements through the Discord bot.
 
 3. **Stop Coding Session**:
-   - When you close VSCode, the session ends, and your session data is saved.
+   - When you close VSCode, the session ends, and your session data is saved to the MongoDB database.
 
 ## Commands
 
 - **Profile**: Displays your coding profile, including total coding time, language stats, and achievements.
-- **Leaderboard**: View the top users based on total coding time.
-- **Achievements**: Lists the milestones you’ve achieved.
+- **Leaderboard**: View the top users based on total coding time
+- **Achievements**: Lists the milestones you’ve achieved
+- **Compare**: Compares your stats against another user's stats
+- **Freeze Streak**: Freezes your streak
+- **Help**: Shows all commands and info about the bot
+- **Recents**: Shows information from recent session
+- **Set Bio**: Sets the bio for the profile command
+- **Bug Reports and Suggestions**: Sends your feedback to the developement team so we can improve the extension and bot
 
 ## Contributing
 
@@ -83,4 +85,4 @@ This Visual Studio Code extension helps you track and analyze your coding sessio
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+This project is licensed under the Creative Commons Legal Code License. See the [LICENSE](LICENSE) file for more details.
