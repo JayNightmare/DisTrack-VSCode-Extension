@@ -13,7 +13,9 @@ This Visual Studio Code extension helps you track and analyze your coding sessio
 
 
 > Bot Invite: https://discord.com/oauth2/authorize?client_id=1305258645906526328
+
 > Bot Version: beta@v0.7.1
+
 > Extension Version: betav@0.4.8
 
 ## Table of Contents
