@@ -8,76 +8,67 @@ let sessionStartTime: Date | null = null;
 let sessionTimerInterval: NodeJS.Timeout | null = null;
 const statusBarTimer = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
     console.log("<< Activating extension... >>");
     extensionContext = context;
 
-    // Create a status bar button for linking Discord
-    const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-    const discordId = context.globalState.get<string>('discordId');
+    applyConfigurationSettings();
 
-    if (discordId) {
-        statusBar.text = "Connected to Discord";
-        console.log(`<< Discord User ID is already linked: ${discordId} >>`);
+    // Automatically start tracking on load (rest of the activation code)
+    sessionStartTime = new Date();
+    startSession(context);
 
-        // Incase they want to connect again
-        statusBar.command = "extension.linkToDiscord";
-        statusBar.tooltip = "Click to link your VSCode account to Discord";
-        console.log("<< Discord User ID not linked, prompting user... >>");
-
-        // Register the link to Discord command
-        context.subscriptions.push(
-            vscode.commands.registerCommand("extension.linkToDiscord", async () => {
-                const enteredDiscordId = await vscode.window.showInputBox({
-                    prompt: "Enter your Discord User ID to link it with VSCode",
-                    placeHolder: "Enter Discord User ID here",
-                });
-
-                if (enteredDiscordId) {
-                    context.globalState.update('discordId', enteredDiscordId);
-                    vscode.window.showInformationMessage("<< Discord User ID linked successfully! >>");
-                    statusBar.text = "Connected to Discord";
-                    console.log(`<< Discord User ID Added: ${enteredDiscordId} >>`);
-                } else {
-                    vscode.window.showErrorMessage("<< Discord ID is required to link your account >>");
-                }
-            })
-        );
-    } else {
-        // If Discord ID is not linked
-        statusBar.text = "Link to Discord";
-        statusBar.command = "extension.linkToDiscord";
-        statusBar.tooltip = "Click to link your VSCode account to Discord";
-        console.log("<< Discord User ID not linked, prompting user... >>");
-
-        // Register the link to Discord command
-        context.subscriptions.push(
-            vscode.commands.registerCommand("extension.linkToDiscord", async () => {
-                const enteredDiscordId = await vscode.window.showInputBox({
-                    prompt: "Enter your Discord User ID to link it with VSCode",
-                    placeHolder: "Enter Discord User ID here",
-                });
-
-                if (enteredDiscordId) {
-                    context.globalState.update('discordId', enteredDiscordId);
-                    vscode.window.showInformationMessage("<< Discord User ID linked successfully! >>");
-                    statusBar.text = "Connected to Discord";
-                    console.log(`<< Discord User ID Added: ${enteredDiscordId} >>`);
-                } else {
-                    vscode.window.showErrorMessage("<< Discord ID is required to link your account >>");
-                }
-            })
-        );
+    const enableRichPresence = vscode.workspace.getConfiguration("extension").get<boolean>("enableRichPresence");
+    if (enableRichPresence) {
+        startRichPresence();
     }
 
+    startSessionTimer();
+    
+
+    // Create a status bar button for linking Discord
+    const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+    let discordId = context.globalState.get<string>('discordId');
+    console.log(`<< Discord User ID: ${discordId} >>`);
+
+    // Check if the stored discordId is valid (only numeric characters)
+    if (discordId && !/^\d+$/.test(discordId)) {
+        vscode.window.showWarningMessage("<< Stored Discord ID is invalid. Please re-enter your Discord ID. >>");
+        discordId = undefined; // Clear invalid ID so the user will be prompted to enter a new one
+    }
+
+    statusBar.text = discordId ? "Connected to Discord" : "Link to Discord";
+
+    // Set the command to allow re-linking Discord, even if already connected
+    statusBar.command = "extension.updateDiscordId";
+    statusBar.tooltip = "Click to update your Discord User ID";
     statusBar.show();
     context.subscriptions.push(statusBar);
 
-    // Automatically start tracking on load
-    sessionStartTime = new Date();
-    startSessionTimer();
-    startRichPresence();
-    startSession(context);
+    // Register the command to link or update the Discord ID
+    context.subscriptions.push(
+        vscode.commands.registerCommand("extension.updateDiscordId", async () => {
+            const enteredDiscordId = await vscode.window.showInputBox({
+                prompt: "Enter your Discord User ID to link it with VSCode",
+                placeHolder: "Enter Discord User ID here",
+                value: discordId ?? "", // Show the current ID if available
+            });
+
+            // Check if entered ID is valid
+            if (enteredDiscordId && /^\d+$/.test(enteredDiscordId)) {
+                await context.globalState.update('discordId', enteredDiscordId);
+                vscode.window.showInformationMessage("<< Discord User ID updated successfully! >>");
+                statusBar.text = "Connected to Discord";
+                console.log(`<< Discord User ID updated to: ${enteredDiscordId} >>`);
+            } else if (enteredDiscordId) {
+                vscode.window.showErrorMessage("<< Invalid Discord ID. Please enter a numeric Discord User ID. >>");
+            } else {
+                vscode.window.showErrorMessage("<< Discord ID is required to link your account >>");
+            }
+        })
+    );
+
+    await getSettings(discordId);
 }
 
 export async function deactivate() {
@@ -111,8 +102,25 @@ export async function deactivate() {
     console.log("<< Extension Deactivated >>");
 }
 
+function applyConfigurationSettings() {
+    const config = vscode.workspace.getConfiguration("extension");
+
+    const discordId = config.get<string>("updateDiscordId");
+    const enableRichPresence = config.get<boolean>("enableRichPresence");
+    const sessionTimerFormat = config.get<string>("sessionTimerFormat");
+
+    console.log(`Config - Discord ID: ${discordId}, Rich Presence: ${enableRichPresence}, Timer Format: ${sessionTimerFormat}`);
+
+    if (discordId) {
+        extensionContext.globalState.update("discordId", discordId);
+    }
+}
+
 // Function to start the timer and update every second
 function startSessionTimer() {
+    const config = vscode.workspace.getConfiguration("extension");
+    const sessionTimerFormat = config.get<string>("sessionTimerFormat");
+
     statusBarTimer.show();
     sessionTimerInterval = setInterval(() => {
         const elapsed = new Date().getTime() - (sessionStartTime?.getTime() ?? 0);
@@ -120,14 +128,40 @@ function startSessionTimer() {
         const minutes = Math.floor((elapsed / (1000 * 60)) % 60);
         const seconds = Math.floor((elapsed / 1000) % 60);
 
-        statusBarTimer.text = `Session Timer: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        switch (sessionTimerFormat) {
+            case "hh:mm:ss":
+                statusBarTimer.text = `Session Timer: ${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+                break;
+            case "mm:ss":
+                statusBarTimer.text = `Session Timer: ${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+                break;
+            case "hours":
+                statusBarTimer.text = `Session Duration: ${((elapsed / (1000 * 60 * 60))).toFixed(1)} hrs`;
+                break;
+            default:
+                statusBarTimer.text = `Session Timer: ${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+        }
     }, 1000);
 }
 
-function stopSessionTimer() {
+async function stopSessionTimer() {
     if (sessionTimerInterval) {
         clearInterval(sessionTimerInterval);
         sessionTimerInterval = null;
     }
     statusBarTimer.hide();
+}
+
+async function getSettings(newDiscordId: string | undefined) {
+    const config = vscode.workspace.getConfiguration("extension");
+    await config.update("updateDiscordId", newDiscordId, vscode.ConfigurationTarget.Global);
+
+    // Retrieve specific settings
+    const discordUserId = config.get<string>("updateDiscordId");
+    const enableRichPresence = config.get<boolean>("enableRichPresence");
+    const sessionTimerFormat = config.get<string>("sessionTimerFormat");
+
+    console.log(`Discord User ID: ${discordUserId}`);
+    console.log(`Rich Presence Enabled: ${enableRichPresence}`);
+    console.log(`Timer Format: ${sessionTimerFormat}`);
 }
