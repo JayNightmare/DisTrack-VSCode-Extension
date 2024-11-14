@@ -5,9 +5,9 @@
   "version": "0.5.1",
   "publisher": "JayNightmare",
   "author": {
-		"name": "Jay",
-		"email": "jn3.enquiries@gmail.com"
-	},
+    "name": "Jay",
+    "email": "jn3.enquiries@gmail.com"
+  },
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -20,51 +20,53 @@
     "Other"
   ],
   "bugs": {
-		"url": "https://github.com/JayNightmare/DisTrack-VSCode-Extension/issues"
-	},
-	"keywords": [
-		"discord",
-		"vscode",
-		"rich",
-		"presence",
-		"rich presence",
-		"rpc",
+    "url": "https://github.com/JayNightmare/DisTrack-VSCode-Extension/issues"
+  },
+  "keywords": [
+    "discord",
+    "vscode",
+    "rich",
+    "presence",
+    "rich presence",
+    "rpc",
     "time tracking",
     "development",
     "tracker",
     "leaderboard",
     "discord leaderboard"
-	],
+  ],
   "homepage": "https://github.com/JayNightmare/DisTrack-VSCode-Extension#readme",
   "activationEvents": [
     "*"
   ],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [
-      
-    ],
+    "commands": [],
     "configuration": {
-            "title": "Dis.Track Settings",
-            "properties": {
-                "extension.updateDiscordId": {
-                    "type": "string",
-                    "default": "",
-                    "description": "Enter your Discord User ID to link it with the extension."
-                },
-                "extension.enableRichPresence": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Enable or disable Rich Presence integration."
-                },
-                "extension.sessionTimerFormat": {
-                    "type": "string",
-                    "enum": ["hh:mm:ss", "mm:ss", "hours"],
-                    "default": "hh:mm:ss",
-                    "description": "Choose the format for the session timer display."
-                }
-            }
+      "title": "Dis.Track Settings",
+      "properties": {
+        "extension.updateDiscordId": {
+          "type": "string",
+          "default": "",
+          "description": "Enter your Discord User ID to link it with the extension."
+        },
+        "extension.enableRichPresence": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable Rich Presence integration."
+        },
+        "extension.sessionTimerFormat": {
+          "type": "string",
+          "enum": [
+            "hh:mm:ss",
+            "mm:ss",
+            "hours"
+          ],
+          "default": "hh:mm:ss",
+          "description": "Choose the format for the session timer display."
         }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { startSession, endSession, getLanguageDurations } from "./utils/timeTracker";
-import { sendSessionData } from "./utils/api";
+import { sendSessionData, checkAndValidateUserId } from "./utils/api";
 import { startRichPresence, stopRichPresence } from "./utils/rpcDiscord";
 
 let extensionContext: vscode.ExtensionContext;
@@ -12,9 +12,7 @@ export async function activate(context: vscode.ExtensionContext) {
     console.log("<< Activating extension... >>");
     extensionContext = context;
 
-    applyConfigurationSettings();
-
-    // Automatically start tracking on load (rest of the activation code)
+    // Automatically start tracking on load if enabled
     sessionStartTime = new Date();
     startSession(context);
 
@@ -24,18 +22,11 @@ export async function activate(context: vscode.ExtensionContext) {
     }
 
     startSessionTimer();
-    
 
     // Create a status bar button for linking Discord
     const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     let discordId = context.globalState.get<string>('discordId');
     console.log(`<< Discord User ID: ${discordId} >>`);
-
-    // Check if the stored discordId is valid (only numeric characters)
-    if (discordId && !/^\d+$/.test(discordId)) {
-        vscode.window.showWarningMessage("<< Stored Discord ID is invalid. Please re-enter your Discord ID. >>");
-        discordId = undefined; // Clear invalid ID so the user will be prompted to enter a new one
-    }
 
     statusBar.text = discordId ? "Connected to Discord" : "Link to Discord";
 
@@ -56,28 +47,54 @@ export async function activate(context: vscode.ExtensionContext) {
 
             // Check if entered ID is valid
             if (enteredDiscordId && /^\d+$/.test(enteredDiscordId)) {
-                await context.globalState.update('discordId', enteredDiscordId);
-                vscode.window.showInformationMessage("<< Discord User ID updated successfully! >>");
-                statusBar.text = "Connected to Discord";
-                console.log(`<< Discord User ID updated to: ${enteredDiscordId} >>`);
+                const isValid = await checkAndValidateUserId(enteredDiscordId);
+                if (isValid) {
+                    vscode.window.showInformationMessage("Discord ID is valid and exists!");
+                    await context.globalState.update('discordId', enteredDiscordId);
+                    vscode.window.showInformationMessage("<< Discord User ID updated successfully! >>");
+                    statusBar.text = "Connected to Discord";
+                    console.log(`<< Discord User ID updated to: ${enteredDiscordId} >>`);
+                }
             } else if (enteredDiscordId) {
-                vscode.window.showErrorMessage("<< Invalid Discord ID. Please enter a numeric Discord User ID. >>");
+                vscode.window.showErrorMessage("<< Invalid Discord ID. Enable Developer Mode In Discord And Try Again >>");
             } else {
                 vscode.window.showErrorMessage("<< Discord ID is required to link your account >>");
             }
         })
     );
 
-    await getSettings(discordId);
+    // Update Rich Presence based on configuration changes
+    vscode.workspace.onDidChangeConfiguration((e) => {
+        if (e.affectsConfiguration("extension.enableRichPresence")) {
+            const enableRichPresence = vscode.workspace.getConfiguration("extension").get<boolean>("enableRichPresence");
+            enableRichPresence ? startRichPresence() : stopRichPresence();
+        }
+    });
+
+    // Apply settings from configuration
+    applyConfigurationSettings();
+}
+
+function applyConfigurationSettings() {
+    const config = vscode.workspace.getConfiguration("extension");
+
+    const discordId = config.get<string>("updateDiscordId");
+    const enableRichPresence = config.get<boolean>("enableRichPresence");
+    const sessionTimerFormat = config.get<string>("sessionTimerFormat");
+
+    console.log(`<< Config - Discord ID: ${discordId}, Rich Presence: ${enableRichPresence}, Timer Format: ${sessionTimerFormat} >>`);
+
+    if (discordId) {
+        extensionContext.globalState.update("discordId", discordId);
+    }
 }
 
 export async function deactivate() {
-    console.log("<< Deactivating extension... >>");
     stopSessionTimer();
     stopRichPresence();
 
     const duration = await endSession();
-    const discordId = extensionContext.globalState.get<string>('discordId');
+    const discordId = extensionContext.globalState.get<string>("discordId");
     const lastSessionDate = new Date().toISOString();
     const languages = getLanguageDurations();
 
@@ -102,21 +119,7 @@ export async function deactivate() {
     console.log("<< Extension Deactivated >>");
 }
 
-function applyConfigurationSettings() {
-    const config = vscode.workspace.getConfiguration("extension");
-
-    const discordId = config.get<string>("updateDiscordId");
-    const enableRichPresence = config.get<boolean>("enableRichPresence");
-    const sessionTimerFormat = config.get<string>("sessionTimerFormat");
-
-    console.log(`Config - Discord ID: ${discordId}, Rich Presence: ${enableRichPresence}, Timer Format: ${sessionTimerFormat}`);
-
-    if (discordId) {
-        extensionContext.globalState.update("discordId", discordId);
-    }
-}
-
-// Function to start the timer and update every second
+// Timer function with format setting
 function startSessionTimer() {
     const config = vscode.workspace.getConfiguration("extension");
     const sessionTimerFormat = config.get<string>("sessionTimerFormat");
@@ -144,24 +147,10 @@ function startSessionTimer() {
     }, 1000);
 }
 
-async function stopSessionTimer() {
+function stopSessionTimer() {
     if (sessionTimerInterval) {
         clearInterval(sessionTimerInterval);
         sessionTimerInterval = null;
     }
     statusBarTimer.hide();
-}
-
-async function getSettings(newDiscordId: string | undefined) {
-    const config = vscode.workspace.getConfiguration("extension");
-    await config.update("updateDiscordId", newDiscordId, vscode.ConfigurationTarget.Global);
-
-    // Retrieve specific settings
-    const discordUserId = config.get<string>("updateDiscordId");
-    const enableRichPresence = config.get<boolean>("enableRichPresence");
-    const sessionTimerFormat = config.get<string>("sessionTimerFormat");
-
-    console.log(`Discord User ID: ${discordUserId}`);
-    console.log(`Rich Presence Enabled: ${enableRichPresence}`);
-    console.log(`Timer Format: ${sessionTimerFormat}`);
 }
