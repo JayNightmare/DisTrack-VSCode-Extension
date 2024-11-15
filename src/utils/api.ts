@@ -20,7 +20,7 @@ export async function sendSessionData(userId: string, duration: number, sessionD
 
 // Check if a Discord user ID has a valid format (17-18 numeric digits)
 function isValidDiscordId(userId: string): boolean {
-    return /^\d{17,18}$/.test(userId);
+    return /^\d{15,32}$/.test(userId);
 }
 
 // Validate the Discord user ID by checking both format and API verification
@@ -41,7 +41,7 @@ export async function checkAndValidateUserId(userId: string): Promise<boolean> {
     // API call to verify if the ID exists on Discord
     try {
         const response = await axios.get(`https://discord.com/api/v10/users/${userId}`, {
-            headers: { Authorization: `Bot BOT_TOKEN_HERE` }, // Has to be a string
+            headers: { Authorization: `Bot BOT_TOKEN` }, // Has to be a string
         });
         
         // If the request is successful, ID exists

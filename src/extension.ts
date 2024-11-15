@@ -49,14 +49,14 @@ export async function activate(context: vscode.ExtensionContext) {
             if (enteredDiscordId && /^\d+$/.test(enteredDiscordId)) {
                 const isValid = await checkAndValidateUserId(enteredDiscordId);
                 if (isValid) {
-                    vscode.window.showInformationMessage("Discord ID is valid and exists!");
+                    vscode.window.showInformationMessage("<< Discord ID is valid and exists! >>");
                     await context.globalState.update('discordId', enteredDiscordId);
                     vscode.window.showInformationMessage("<< Discord User ID updated successfully! >>");
                     statusBar.text = "Connected to Discord";
                     console.log(`<< Discord User ID updated to: ${enteredDiscordId} >>`);
                 }
             } else if (enteredDiscordId) {
-                vscode.window.showErrorMessage("<< Invalid Discord ID. Enable Developer Mode In Discord And Try Again >>");
+                vscode.window.showErrorMessage("<< Invalid Discord ID | Enable Developer Mode In Discord And Try Again >>");
             } else {
                 vscode.window.showErrorMessage("<< Discord ID is required to link your account >>");
             }
