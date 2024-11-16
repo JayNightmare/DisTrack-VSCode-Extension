@@ -1,40 +1,45 @@
 import * as vscode from 'vscode';
 
-let startTime: Date | null = null;
+let sessionStartTime: Date | null = null;
+let activeLanguageStartTime: Date | null = null;
 let activeLanguage: string | null = null;
 let languageDurations: Record<string, number> = {};
 
-export function startSession(context: vscode.ExtensionContext) {
-    startTime = new Date();
-    setActiveLanguage(); // Initial language setup
+// Start the coding session
+export function startSession() {
+    sessionStartTime = new Date();
+    activeLanguageStartTime = sessionStartTime; // Set the initial start time for active language
     vscode.window.showInformationMessage("<< Started coding session! >>");
-    console.log(`<< Coding session started at: ${startTime} >>`);
+    console.log(`<< Session started at: ${sessionStartTime} >>`);
 }
 
+// End the coding session and return the total duration in seconds
 export function endSession(): number | null {
-    if (startTime) {
-        const endTime = new Date();
-        const duration = (endTime.getTime() - startTime.getTime()) / 1000; // duration in seconds
-        
-        // Capture any remaining time for the active language
-        if (activeLanguage) {
-            const timeSpent = (endTime.getTime() - startTime.getTime()) / 1000;
+    if (sessionStartTime) {
+        const sessionEndTime = new Date();
+        const totalDuration = (sessionEndTime.getTime() - sessionStartTime.getTime()) / 1000;
+
+        // Add time for the last active language
+        if (activeLanguage && activeLanguageStartTime) {
+            const timeSpent = (sessionEndTime.getTime() - activeLanguageStartTime.getTime()) / 1000;
             languageDurations[activeLanguage] = (languageDurations[activeLanguage] || 0) + timeSpent;
         }
 
-        console.log(`<< Coding session ended at: ${endTime} >>`);
-        console.log(`<< Session duration: ${duration} seconds >>`);
-        
+        console.log(`<< Session ended at: ${sessionEndTime} >>`);
+        console.log(`<< Total session duration: ${totalDuration} seconds >>`);
+        console.log(`<< Language durations: ${JSON.stringify(languageDurations)} >>`);
+
         // Reset session variables
-        startTime = null;
+        sessionStartTime = null;
+        activeLanguageStartTime = null;
         activeLanguage = null;
 
-        return duration;
+        return totalDuration;
     }
     return null;
 }
 
-// Set or update the active language, accumulating time for previous language
+// Update active language and accumulate time
 function setActiveLanguage() {
     const editor = vscode.window.activeTextEditor;
     const now = new Date();
@@ -42,25 +47,26 @@ function setActiveLanguage() {
     if (editor) {
         const currentLanguage = editor.document.languageId;
 
-        // Calculate time spent on the previous language before switching
-        if (activeLanguage && startTime) {
-            const timeSpent = (now.getTime() - startTime.getTime()) / 1000;
+        // Accumulate time for the previous active language
+        if (activeLanguage && activeLanguageStartTime) {
+            const timeSpent = (now.getTime() - activeLanguageStartTime.getTime()) / 1000;
             languageDurations[activeLanguage] = (languageDurations[activeLanguage] || 0) + timeSpent;
             console.log(`<< Added ${timeSpent} seconds to ${activeLanguage} >>`);
         }
 
-        // Set the new language and reset start time
+        // Update active language and reset start time
         activeLanguage = currentLanguage;
-        startTime = now;
+        activeLanguageStartTime = now;
         console.log(`<< Switched active language to: ${currentLanguage} >>`);
     }
 }
 
+// Get language durations
 export function getLanguageDurations() {
     return languageDurations;
 }
 
-// Event listeners to track language changes more effectively
+// Event listeners for language changes
 vscode.window.onDidChangeActiveTextEditor(() => {
     setActiveLanguage();
 });
