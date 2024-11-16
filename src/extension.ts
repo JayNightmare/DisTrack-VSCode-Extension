@@ -14,7 +14,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Automatically start tracking on load if enabled
     sessionStartTime = new Date();
-    startSession(context);
+    startSession();
 
     const enableRichPresence = vscode.workspace.getConfiguration("extension").get<boolean>("enableRichPresence");
     if (enableRichPresence) {
