@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { startSession, endSession, getLanguageDurations } from "./utils/timeTracker";
 import { sendSessionData, checkAndValidateUserId } from "./utils/api";
 import { startRichPresence, stopRichPresence } from "./utils/rpcDiscord";
+import { getStreakData } from './utils/timeTracker';
 
 let extensionContext: vscode.ExtensionContext;
 let sessionStartTime: Date | null = null;
@@ -97,11 +98,13 @@ export async function deactivate() {
     const discordId = extensionContext.globalState.get<string>("discordId");
     const lastSessionDate = new Date().toISOString();
     const languages = getLanguageDurations();
+    const streakData = getStreakData();
 
     console.log(`<< Discord User Id: ${discordId} >>`);
     console.log(`<< Session duration: ${duration} seconds >>`);
     console.log(`<< Last session date: ${lastSessionDate} >>`);
     console.log(`<< Session languages: ${JSON.stringify(languages)} >>`);
+    console.log(`<< Streak Data: ${JSON.stringify(streakData)} >>`);
 
     if (!discordId || !duration) {
         console.log("<< Error: Missing required data. Discord ID or Duration is null >>");
@@ -110,7 +113,7 @@ export async function deactivate() {
     
     try {
         console.log("<< Sending session data to Discord... >>");
-        await sendSessionData(discordId, duration, lastSessionDate, languages);
+        await sendSessionData(discordId, duration, lastSessionDate, languages, streakData);
         console.log("<< Session data sent successfully! >>");
     } catch (error) {
         console.error(`<< Failed to send session data: ${error} >>`);

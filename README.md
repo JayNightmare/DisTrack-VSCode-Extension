@@ -19,7 +19,7 @@ This Visual Studio Code extension helps you track and analyze your coding sessio
 - [Source Code](https://github.com/JayNightmare/DisTrack-VSCode-Extension)
 - [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=JayNightmare.dis-track)
 
-> Extension Version: beta@v0.5.5
+> Extension Version: beta@v0.5.7
 
 ## Table of Contents
 - [Table of Contents](#table-of-contents)
