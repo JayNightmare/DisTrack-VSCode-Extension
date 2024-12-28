@@ -150,8 +150,8 @@ export async function deactivate() {
   }
 
   try {
-
     console.log("<< Sending session data to Discord... >>");
+    
     await sendSessionData(
       discordId,
       discordUsername ?? "",
@@ -160,7 +160,7 @@ export async function deactivate() {
       languages,
       streakData
     );
-    
+
     console.log("<< Session data sent successfully! >>");
   } catch (error) {
     console.error(`<< Failed to send session data: ${error} >>`);
