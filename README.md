@@ -13,13 +13,13 @@ This Visual Studio Code extension helps you track and analyze your coding sessio
 
 > Bot Invite: https://discord.com/oauth2/authorize?client_id=1305258645906526328
 
-> Bot Version: beta@v0.7.1
+> Bot Version: beta@v0.7.8
 
 > Extension: 
 - [Source Code](https://github.com/JayNightmare/DisTrack-VSCode-Extension)
 - [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=JayNightmare.dis-track)
 
-> Extension Version: beta@v0.5.9
+> Extension Version: beta@v0.6.0
 
 ## Table of Contents
 - [Table of Contents](#table-of-contents)
