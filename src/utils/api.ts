@@ -4,7 +4,16 @@ import * as vscode from "vscode";
 const endpointUrl = "";
 
 // Function to send session data
-export async function sendSessionData(userId: string, username: string, duration: number, sessionDate: string, languages: Record<string, number>, streakData: { currentStreak: number; longestStreak: number }) {
+export async function sendSessionData(
+    userId: string, 
+    username: string,
+    duration: number,
+    sessionDate: string,
+    languages: Record<string, number>,
+    streakData: {
+        currentStreak: number;
+        longestStreak: number
+    }) {
     try {
         const response = await axios.post(endpointUrl, {
             userId,

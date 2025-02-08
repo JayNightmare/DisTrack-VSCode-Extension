@@ -56,39 +56,58 @@ export async function activate(context: vscode.ExtensionContext) {
   statusBar.command = "extension.updateDiscordId";
   statusBar.tooltip = "Click to update your Discord User ID";
   statusBar.show();
+  // Show error but don't exit if no ID exists
+  if (!discordId) {
+    vscode.window.showErrorMessage(
+      "Discord ID is required. Click the status bar button to link."
+    );
+  } else {
+    // Start session tracking if ID exists
+    sessionStartTime = new Date();
+    startSession();
+
+    const enableRichPresence = vscode.workspace
+      .getConfiguration("extension")
+      .get<boolean>("enableRichPresence");
+    if (enableRichPresence) { startRichPresence(); }
+
+    startSessionTimer();
+  }
   context.subscriptions.push(statusBar);
 
   // Register the command to link or update the Discord ID
   context.subscriptions.push(
     vscode.commands.registerCommand("extension.updateDiscordId", async () => {
       const enteredDiscordId = await vscode.window.showInputBox({
-        prompt: "Enter your Discord User ID to link it with VSCode",
-        placeHolder: "Enter Discord User ID here",
-        value: discordId ?? "", // Show the current ID if available
+        prompt: "Enter your Discord User ID",
+        placeHolder: "e.g., 123456789012345678",
+        value: discordId ?? ""
       });
 
-      // Check if entered ID is valid
       if (enteredDiscordId && /^\d+$/.test(enteredDiscordId)) {
         const isValid = await checkAndValidateUserId(enteredDiscordId);
         if (isValid) {
-          vscode.window.showInformationMessage(
-            "<< Discord ID is valid and exists! >>"
-          );
           await context.globalState.update("discordId", enteredDiscordId);
-          vscode.window.showInformationMessage(
-            "<< Discord User ID updated successfully! >>"
-          );
+          discordId = enteredDiscordId;
           statusBar.text = "Connected to Discord";
-          console.log(`<< Discord User ID updated to: ${enteredDiscordId} >>`);
+          
+          // Start tracking if not already running
+          if (!sessionStartTime) {
+            sessionStartTime = new Date();
+            startSession();
+            
+            const enableRichPresence = vscode.workspace
+              .getConfiguration("extension")
+              .get<boolean>("enableRichPresence");
+            if (enableRichPresence) { startRichPresence(); }
+            
+            startSessionTimer();
+          }
+          
+          vscode.window.showInformationMessage("Discord ID linked successfully!");
         }
       } else if (enteredDiscordId) {
-        vscode.window.showErrorMessage(
-          "<< Invalid Discord ID | Enable Developer Mode In Discord And Try Again >>"
-        );
-      } else {
-        vscode.window.showErrorMessage(
-          "<< Discord ID is required to link your account >>"
-        );
+        vscode.window.showErrorMessage("Invalid Discord ID format");
       }
     })
   );
