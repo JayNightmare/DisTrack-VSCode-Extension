@@ -3,26 +3,25 @@
 </div>
 
 <div align=center>
-  <h1>
-    VSCode Coding Tracker Extension
-  </h1>
+  <h1>Dis.Track</h1>
+  <h2>Discord VSCode Leaderboard Tracker Extension</h2>
 </div>
 
 
 This Visual Studio Code extension helps you track and analyze your coding sessions by integrating with Discord and logging coding activity to a MongoDB database. It displays your active coding time, language usage, and various achievements through a dedicated Discord bot. 
 
-> Bot Invite: https://discord.com/oauth2/authorize?client_id=1305258645906526328
-> 
-> Bot Version: beta@v0.7.8
+> **Bot Invite:** https://discord.com/oauth2/authorize?client_id=1305258645906526328
+>
+> **Bot Version:** beta@v0.7.8
 > - [Source Code](https://github.com/JayNightmare/DisTrack-Discord-Bot)
-
-> Extension: 
+----
+> **Extension:**
 > - [Source Code](https://github.com/JayNightmare/DisTrack-VSCode-Extension)
 > - [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=JayNightmare.dis-track)
 >
-> Extension Version: beta@v0.6.0
-
-> Website: https://distrack-website.vercel.app
+> **Extension Version:** beta@v0.6.1
+----
+> **Website:** https://distrack-website.vercel.app
 
 ## Table of Contents
 - [Table of Contents](#table-of-contents)

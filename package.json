@@ -1,8 +1,8 @@
 {
   "name": "dis-track",
-  "displayName": "Discord VSCode Tracker",
+  "displayName": "Dis.Track | Discord VSCode Leaderboard Tracker",
   "description": "This will track your time in VSCode. Add the bot to your server to check your progress!",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "publisher": "JayNightmare",
   "author": {
     "name": "Jay",
