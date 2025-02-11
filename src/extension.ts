@@ -27,28 +27,33 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   let discordId = context.globalState.get<string>("discordId");
+  statusBar.text = discordId ? "Connected to Discord" : "Link to Discord";
+  statusBar.command = "extension.updateDiscordId";
+  statusBar.tooltip = "Click to update your Discord User ID";
+  statusBar.show();
 
   if (!discordId) {
     vscode.window.showErrorMessage(
-      "<< Discord ID is required to track sessions. Please link your Discord account. >>"
+      "Discord ID is required to track sessions. Please link your Discord account"
     );
-    return;
+  } else {
+    console.log(`<< Discord User ID: ${discordId} >>`);
+    
+    // Start session tracking
+    sessionStartTime = new Date();
+    startSession();
+
+    const enableRichPresence = vscode.workspace
+      .getConfiguration("extension")
+      .get<boolean>("enableRichPresence");
+    if (enableRichPresence) {
+      startRichPresence();
+    }
+
+    startSessionTimer();
   }
 
-  console.log(`<< Discord User ID: ${discordId} >>`);
-
-  // Automatically start tracking on load if enabled
-  sessionStartTime = new Date();
-  startSession();
-
-  const enableRichPresence = vscode.workspace
-    .getConfiguration("extension")
-    .get<boolean>("enableRichPresence");
-  if (enableRichPresence) {
-    startRichPresence();
-  }
-
-  startSessionTimer();
+  context.subscriptions.push(statusBar);
 
   statusBar.text = discordId ? "Connected to Discord" : "Link to Discord";
 
