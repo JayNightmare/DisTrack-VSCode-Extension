@@ -5,7 +5,7 @@ All notable changes to the "DisTrack" extension will be documented in this file.
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 ## Patch Notes
-### v0.6.3
+### v0.6.4
 * **MAJOR:** Fixed compile error which prevented the extension to load. This was due to a task which looked for errors when the extension was loading, but was not properly configured to handle the new version of the extension, causing it to get stuck and prevent the extension from completely loading.
 
 ### v0.6.2
