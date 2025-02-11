@@ -32,6 +32,7 @@ export async function activate(context: vscode.ExtensionContext) {
   statusBar.tooltip = "Click to update your Discord User ID";
   statusBar.show();
 
+  // ! Checks if discord has been linked on boot
   if (!discordId) {
     vscode.window.showErrorMessage(
       "Discord ID is required to track sessions. Please link your Discord account"
