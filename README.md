@@ -1,7 +1,7 @@
 <div align=center>
   <img src="images/distrack.png" width=225 radius=10 />
 </div>
-
+ 
 <div align=center>
   <h1>Dis.Track</h1>
   <h2>Discord VSCode Leaderboard Tracker Extension</h2>
