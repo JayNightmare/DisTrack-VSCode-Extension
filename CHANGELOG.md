@@ -5,6 +5,9 @@ All notable changes to the "DisTrack" extension will be documented in this file.
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 ## Patch Notes
+## v0.6.6
+* Removed watch and watch-test from build start-up
+
 ### v0.6.5
 * **MAYOR:** Added side panel so you can view the leaderboard!
 * Fixed issue where session timer wouldn't appear on some instances.
