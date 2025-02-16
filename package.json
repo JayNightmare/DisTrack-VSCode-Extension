@@ -41,7 +41,20 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [],
+    "views": {
+            "explorer": [
+                {
+                    "id": "discordCodingView",
+                    "name": "Discord Coding Stats"
+                }
+            ]
+    },
+    "commands": [
+      {
+        "command": "extension.showDiscordPanel",
+        "title": "Show Coding Stats"
+      }
+    ],
     "configuration": {
       "title": "Dis.Track Settings",
       "properties": {

@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { DiscordCodingPanel } from "./panel";
 import {
   startSession,
   endSession,
@@ -15,43 +16,72 @@ const statusBarTimer = vscode.window.createStatusBarItem(
   vscode.StatusBarAlignment.Left,
   100
 );
+let discordCodingPanel: DiscordCodingPanel;
 
 export async function activate(context: vscode.ExtensionContext) {
   console.log("<< Activating extension... >>");
   extensionContext = context;
+  console.log("<< passed context >>");
+  discordCodingPanel = new DiscordCodingPanel(context);
+  console.log("<< passed discord panel context >>");
+
+  // Register the panel view
+  console.log("<< pushing panel to view >>");
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider("discordCodingView", {
+      resolveWebviewView: (webviewView) => {
+        webviewView.webview.html = discordCodingPanel.getHtmlContent(
+          !!context.globalState.get("discordId"),
+          []
+        );
+      },
+    })
+  );
+  console.log("<< finished pushing panel to view >>");
 
   // Create a status bar button for linking Discord
+  console.log("<< pushing status bar button >>");
   const statusBar = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left,
     100
   );
+  console.log("<< finished pushing status bar button >>");
 
   let discordId = context.globalState.get<string>("discordId");
+  console.log("<< Checking Discord ID >>");
   statusBar.text = discordId ? "Connected to Discord" : "Link to Discord";
   statusBar.command = "extension.updateDiscordId";
   statusBar.tooltip = "Click to update your Discord User ID";
   statusBar.show();
+  console.log("<< Status bar updated >>");
 
   // ! Checks if discord has been linked on boot
   if (!discordId) {
+    console.log("<< No Discord Connected >>");
     vscode.window.showErrorMessage(
       "Discord ID is required to track sessions. Please link your Discord account"
     );
   } else {
     console.log(`<< Discord User ID: ${discordId} >>`);
-    
+
     // Start session tracking
+    console.log("<< Starting session tracking >>");
     sessionStartTime = new Date();
     startSession();
+    console.log("<< Session tracking started >>");
 
     const enableRichPresence = vscode.workspace
       .getConfiguration("extension")
       .get<boolean>("enableRichPresence");
     if (enableRichPresence) {
+      console.log("<< Starting Rich Presence >>");
       startRichPresence();
+      console.log("<< Rich Presence started >>");
     }
 
+    console.log("<< Starting session timer >>");
     startSessionTimer();
+    console.log("<< Session timer started >>");
   }
 
   context.subscriptions.push(statusBar);
@@ -62,6 +92,8 @@ export async function activate(context: vscode.ExtensionContext) {
   statusBar.command = "extension.updateDiscordId";
   statusBar.tooltip = "Click to update your Discord User ID";
   statusBar.show();
+  console.log("<< Status bar updated again >>");
+
   // Show error but don't exit if no ID exists
   if (!discordId) {
     vscode.window.showErrorMessage(
@@ -75,7 +107,9 @@ export async function activate(context: vscode.ExtensionContext) {
     const enableRichPresence = vscode.workspace
       .getConfiguration("extension")
       .get<boolean>("enableRichPresence");
-    if (enableRichPresence) { startRichPresence(); }
+    if (enableRichPresence) {
+      startRichPresence();
+    }
 
     startSessionTimer();
   }
@@ -87,7 +121,7 @@ export async function activate(context: vscode.ExtensionContext) {
       const enteredDiscordId = await vscode.window.showInputBox({
         prompt: "Enter your Discord User ID",
         placeHolder: "e.g., 123456789012345678",
-        value: discordId ?? ""
+        value: discordId ?? "",
       });
 
       if (enteredDiscordId && /^\d+$/.test(enteredDiscordId)) {
@@ -96,25 +130,43 @@ export async function activate(context: vscode.ExtensionContext) {
           await context.globalState.update("discordId", enteredDiscordId);
           discordId = enteredDiscordId;
           statusBar.text = "Connected to Discord";
-          
+
           // Start tracking if not already running
           if (!sessionStartTime) {
             sessionStartTime = new Date();
             startSession();
-            
+
             const enableRichPresence = vscode.workspace
               .getConfiguration("extension")
               .get<boolean>("enableRichPresence");
-            if (enableRichPresence) { startRichPresence(); }
-            
+            if (enableRichPresence) {
+              startRichPresence();
+            }
+
             startSessionTimer();
           }
-          
-          vscode.window.showInformationMessage("Discord ID linked successfully!");
+
+          vscode.window.showInformationMessage(
+            "Discord ID linked successfully!"
+          );
         }
       } else if (enteredDiscordId) {
         vscode.window.showErrorMessage("Invalid Discord ID format");
       }
+    })
+  );
+
+  // Add command to open the panel
+  context.subscriptions.push(
+    vscode.commands.registerCommand("extension.showDiscordPanel", () => {
+      discordCodingPanel.show();
+    })
+  );
+
+  // Update the panel when Discord ID changes
+  context.subscriptions.push(
+    vscode.commands.registerCommand("extension.refreshPanel", () => {
+      discordCodingPanel.updateWebview();
     })
   );
 

@@ -92,3 +92,14 @@ export async function getDiscordUsername(userId: string): Promise<string | null>
     }
     return null;
 }
+
+export async function getLeaderboard() {
+    try {
+        console.log("<< Fetching leaderboard... >>");
+        const response = await axios.get(`${endpointUrl}/leaderboard`);
+        return response.data;
+    } catch (error) {
+        console.error("<< Failed to fetch leaderboard:", error);
+        return [];
+    }
+}
