@@ -1,8 +1,8 @@
 {
   "name": "dis-track",
-  "displayName": "Dis.Track | Discord VSCode Leaderboard Tracker",
+  "displayName": "Dis.Track | Discord VSCode Tracker",
   "description": "This will track your time in VSCode. Add the bot to your server to check your progress!",
-  "version": "0.6.7",
+  "version": "0.6.8",
   "publisher": "JayNightmare",
   "author": {
     "name": "Jay",
@@ -59,12 +59,7 @@
         }
       ]
     },
-    "commands": [
-      {
-        "command": "extension.showDiscordPanel",
-        "title": "Show Coding Stats"
-      }
-    ],
+    "commands": [],
     "configuration": {
       "title": "Dis.Track Settings",
       "properties": {
@@ -92,10 +87,12 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
     "package": "webpack --mode production --devtool hidden-source-map",
     "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"

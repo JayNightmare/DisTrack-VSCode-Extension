@@ -33,13 +33,6 @@
                 "npm: watch-tests"
             ],
             "problemMatcher": []
-        },
-        {
-            "type": "npm",
-            "script": "compile",
-            "problemMatcher": [],
-            "group": "build",
-            "label": "npm: compile"
         }
     ]
 }

@@ -83,6 +83,10 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
                     background: linear-gradient(#131313, #131313) padding-box, linear-gradient(145deg, #000000, #4A81E6) border-box;
                     border: 1px solid transparent;
                     border-radius: 3px;
+
+                    span {
+                        margin-left: 5px;
+                    }
                 }
                 .medal {
                     width: 20px;
