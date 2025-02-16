@@ -61,7 +61,7 @@ export function startRichPresence() {
         // Update activity every 15 seconds to reflect real-time coding status
         rpcInterval = setInterval(() => {
             setActivity();
-        }, 5000);
+        }, 15000);
     });
 }
 

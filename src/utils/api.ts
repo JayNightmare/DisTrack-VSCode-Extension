@@ -1,7 +1,7 @@
 import axios from "axios";
 import * as vscode from "vscode";
 
-const endpointUrl = "";
+const endpointUrl = ""; // Use a site like https://render.com to store the api call to the database.
 
 // Function to send session data
 export async function sendSessionData(
@@ -15,7 +15,7 @@ export async function sendSessionData(
         longestStreak: number
     }) {
     try {
-        const response = await axios.post(endpointUrl, {
+        const response = await axios.post(`${endpointUrl}/coding-session`, {
             userId,
             username,
             duration,

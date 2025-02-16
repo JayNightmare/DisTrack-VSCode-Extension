@@ -5,6 +5,18 @@ All notable changes to the "DisTrack" extension will be documented in this file.
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 ## Patch Notes
+### v0.6.5
+* **MAYOR:** Added side panel so you can view the leaderboard!
+* Fixed issue where session timer wouldn't appear on some instances.
+* Fixed issue where times wouldn't be tracked correctly.
+* Removed tasks from .vscode folder.
+* Added more detailed error messages for debugging purposes.
+* Updated api.ts file with new endpoint url waypoint.
+  * Before: `https://example.com:5050/code-session`
+  * After: `https://example.com:5050`
+* Updated Dependancies to latest versions.
+* Updated package.json file with new view options.
+
 ### v0.6.4
 * **MAJOR:** Fixed compile error which prevented the extension to load. This was due to a task which looked for errors when the extension was loading, but was not properly configured to handle the new version of the extension, causing it to get stuck and prevent the extension from completely loading.
 

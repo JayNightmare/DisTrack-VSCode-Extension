@@ -2,14 +2,14 @@
   "name": "dis-track",
   "displayName": "Dis.Track | Discord VSCode Leaderboard Tracker",
   "description": "This will track your time in VSCode. Add the bot to your server to check your progress!",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "publisher": "JayNightmare",
   "author": {
     "name": "Jay",
     "email": "jn3.enquiries@gmail.com"
   },
   "engines": {
-    "vscode": "^1.93.1"
+    "vscode": "^1.97.0"
   },
   "icon": "images/distrack.png",
   "repository": {
@@ -41,13 +41,23 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "discordCodingContainer",
+          "title": "Dis.Track",
+          "icon": "images/D.png"
+        }
+      ]
+    },
     "views": {
-            "explorer": [
-                {
-                    "id": "discordCodingView",
-                    "name": "Discord Coding Stats"
-                }
-            ]
+      "discordCodingContainer": [
+        {
+          "id": "discordCodingPanel",
+          "name": "Leaderboard",
+          "type": "webview"
+        }
+      ]
     },
     "commands": [
       {
@@ -94,23 +104,24 @@
   },
   "devDependencies": {
     "@types/discord-rpc": "^4.0.8",
-    "@types/mocha": "^10.0.9",
-    "@types/node": "20.x",
-    "@types/vscode": "^1.93.1",
-    "@typescript-eslint/eslint-plugin": "^8.10.0",
-    "@typescript-eslint/parser": "^8.7.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.13.4",
+    "@types/vscode": "^1.97.0",
+    "@typescript-eslint/eslint-plugin": "^8.24.0",
+    "@typescript-eslint/parser": "^8.24.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
-    "eslint": "^9.13.0",
+    "eslint": "^9.20.0",
     "ts-loader": "^9.5.1",
-    "typescript": "^5.6.3",
-    "webpack": "^5.95.0",
-    "webpack-cli": "^5.1.4"
+    "typescript": "^5.7.3",
+    "webpack": "^5.98.0",
+    "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "axios": "^1.7.7",
+    "axios": "^1.7.9",
     "discord-rpc": "^4.0.1",
-    "dotenv": "^16.4.5",
-    "moment": "^2.30.1"
+    "dotenv": "^16.4.7",
+    "moment": "^2.30.1",
+    "vsce": "^2.15.0"
   }
 }
