@@ -5,6 +5,9 @@ All notable changes to the "DisTrack" extension will be documented in this file.
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 ## Patch Notes
+## v0.6.7
+* Added the endpoint and bot token back in. *totally didn't forget to put it in hehehehe*
+
 ## v0.6.6
 * Removed watch and watch-test from build start-up
 
