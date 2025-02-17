@@ -46,7 +46,6 @@ export async function checkAndValidateUserId(userId: string): Promise<boolean> {
             headers: { Authorization: `Bot BOT_TOKEN` },
         });
         
-        // If the request is successful, ID exists
         if (response.status === 200) {
             console.log("<< Discord ID is valid >>");
             return true;
@@ -101,5 +100,16 @@ export async function getLeaderboard() {
     } catch (error) {
         console.error("<< Failed to fetch leaderboard:", error);
         return [];
+    }
+}
+
+// New function to fetch user profile
+export async function getUserProfile(userId: string) {
+    try {
+        const response = await axios.get(`${endpointUrl}/user-profile/${userId}`);
+        return response.data; // Assuming the API returns the profile data in the response
+    } catch (error) {
+        console.error("<< Failed to fetch user profile:", error);
+        return null; // Return null if there's an error
     }
 }

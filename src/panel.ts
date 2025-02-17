@@ -58,6 +58,8 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
         this._view.webview.html = this.getHtmlContent(isConnected, leaderboard);
     }
 
+    // TODO: Fix connect to discord button
+    // TODO: Add buttons to switch from leaderboard to profile
     private getHtmlContent(isConnected: boolean, leaderboard: any[]): string {
         return `
     <!DOCTYPE html>
@@ -80,7 +82,7 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
                     align-items: center;
                     margin: 10px 0;
                     padding: 10px;
-                    background: linear-gradient(#131313, #131313) padding-box, linear-gradient(145deg, #000000, #4A81E6) border-box;
+                    background: linear-gradient(#131313, #131313) padding-box, linear-gradient(145deg, #131313, #4A81E6) border-box;
                     border: 1px solid transparent;
                     border-radius: 3px;
 
@@ -93,9 +95,48 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
                     height: 20px;
                     margin-right: 10px;
                 }
+
+                .border-session {
+                    animation: spin 2.5s infinite linear;
+                    background:
+                    linear-gradient(to bottom,#131313, #131313)
+                    padding-box,
+                    conic-gradient(
+                        from var(--bg-angle) in oklch longer hue,
+                        oklch(0.85 0.37 0) 0 0
+                    )
+                    border-box;
+
+                    border: 2px solid transparent;
+                    font-size: 24px;
+                    font-weight: bold;
+                    margin: 20px 0;
+                    padding: 15px;
+                    border-radius: 8px;
+                    text-align: center;
+                }
+
+                @property --bg-angle {
+                    inherits: false;
+                    initial-value: 0deg;
+                    syntax: "<angle>";
+                }
+
+                @keyframes spin {
+                    to {
+                        --bg-angle: 360deg;
+                    }
+                }
             </style>
         </head>
         <body>
+            <!-- Session Timer -->
+            <div class="header">
+                <h2>Session Timer</h2>
+                <div class="border-session" id="timer">
+                    00:00:00
+                </div>
+            </div>
             ${isConnected
                 ? `
                 <div class="header">
@@ -119,18 +160,49 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
                 : `
                 <div style="text-align: center; margin-top: 50px;">
                     <button class="connect-button" onclick="connectDiscord()">Connect to Discord</button>
-                    <button class="connect-button" onclick="reconnectDiscord()">Re-link Discord</button>
                 </div>
             `
             }
+            <div style="text-align: center; margin-top: 50px;">
+                <button class="connect-button" onclick="reconnectDiscord()">Re-link Discord</button>
+            </div>
         <script>
-            const vscode = acquireVsCodeApi();
-            function connectDiscord() {
-                vscode.postMessage({ command: 'connectDiscord' });
-            }
-            function reconnectDiscord() {
-                vscode.postMessage({ command: 'connectDiscord' });
-            }
+            (function() {
+                const vscode = acquireVsCodeApi();
+                let startTime = Date.now();
+                let timerInterval;
+
+                function connectDiscord() {
+                    vscode.postMessage({ command: 'connectDiscord' });
+                }
+
+                function reconnectDiscord() {
+                    vscode.postMessage({ command: 'connectDiscord' });
+                }
+
+                function formatTime(seconds) {
+                    const hours = Math.floor(seconds / 3600);
+                    const minutes = Math.floor((seconds % 3600) / 60);
+                    const secs = seconds % 60;
+                    return String(hours).padStart(2, '0') + ':' +
+                           String(minutes).padStart(2, '0') + ':' +
+                           String(secs).padStart(2, '0');
+                }
+
+                function updateTimer() {
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    document.getElementById('timer').textContent = formatTime(elapsed);
+                }
+
+                // Start the timer when the page loads
+                timerInterval = setInterval(updateTimer, 1000);
+                updateTimer();
+
+                // Clean up when the webview is disposed
+                window.addEventListener('unload', () => {
+                    clearInterval(timerInterval);
+                });
+            })();
         </script>
         </body>
     </html>
