@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {
+                padding: 20px;
+                font-family: Arial, sans-serif;
+            }
+            
+            .view-switcher {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+            
+            .view-switcher button {
+                flex: 1;
+                padding: 10px;
+                background: #2c2f33;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+            
+            .view-switcher button.active {
+                background: #5865F2;
+            }
+            
+            .view {
+                display: none;
+            }
+            
+            .view.active {
+                display: block;
+            }
+            
+            .header {
+                font-size: 18px;
+                margin-bottom: 20px;
+            }
+            
+            .connect-button {
+                padding: 10px 20px;
+                background: #5865F2;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+            
+            .leaderboard {
+                margin-top: 20px;
+            }
+            
+            .user-row {
+                display: flex;
+                align-items: center;
+                margin: 10px 0;
+                padding: 10px;
+                background: linear-gradient(#131313, #131313) padding-box, linear-gradient(145deg, #131313, #4A81E6) border-box;
+                border: 1px solid transparent;
+                border-radius: 3px;
+            
+                span {
+                    margin-left: 5px;
+                }
+            }
+            
+            .medal {
+                width: 20px;
+                height: 20px;
+                margin-right: 10px;
+            }
+            
+            .border-session {
+                animation: spin 2.5s infinite linear;
+                background:
+                    linear-gradient(to bottom, #131313, #131313) padding-box,
+                    conic-gradient(from var(--bg-angle) in oklch longer hue,
+                        oklch(0.85 0.37 0) 0 0) border-box;
+            
+                border: 2px solid transparent;
+                font-size: 24px;
+                font-weight: bold;
+                margin: 20px 0;
+                padding: 15px;
+                border-radius: 8px;
+                text-align: center;
+            }
+            
+            @property --bg-angle {
+                inherits: false;
+                initial-value: 0deg;
+                syntax: "<angle>";
+            }
+            
+            @keyframes spin {
+                to {
+                    --bg-angle: 360deg;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- View Switcher -->
+        <div class="view-switcher">
+            <button id="profile-button" class="" onclick="switchView('profile')">Profile</button>
+            <button id="leaderboard-button" class="active" onclick="switchView('leaderboard')">Leaderboard</button>
+        </div>
+
+        <!-- Session Timer -->
+        <div class="header">
+            <h2>Session Timer</h2>
+            <div class="border-session" id="timer">
+                00:00:00
+            </div>
+        </div>
+
+        <!-- Profile View -->
+        <div id="profile-view" class="view">
+            <div class="header">
+                <h2>Your Profile</h2>
+            </div>
+            <div id="profile-content">
+                <!-- Profile content will be inserted here -->
+            </div>
+        </div>
+        
+        <!-- Leaderboard View -->
+        <div id="leaderboard-view" class="view active">
+            <div class="header">
+                <h2>Leaderboard</h2>
+            </div>
+            <div class="leaderboard" id="leaderboard">
+                <!-- Leaderboard items will be inserted here -->
+            </div>
+        </div>
+        
+        <!-- Connect Button -->
+        <div id="connect-button-container" style="text-align: center; margin-top: 50px;">
+            <button class="connect-button" onclick="connectDiscord()">Connect to Discord</button>
+        </div>
+        <div style="text-align: center; margin-top: 50px;">
+            <button class="connect-button" onclick="reconnectDiscord()">Re-link Discord</button>
+        </div>
+        <script>
+            (function() {
+                const vscode = acquireVsCodeApi();
+                let timerInterval;
+        
+                function connectDiscord() {
+                    vscode.postMessage({ command: 'connectDiscord' });
+                }
+        
+                function reconnectDiscord() {
+                    vscode.postMessage({ command: 'reconnectDiscord' });
+                }
+        
+                function formatTime(seconds) {
+                    const hours = Math.floor(seconds / 3600);
+                    const minutes = Math.floor((seconds % 3600) / 60);
+                    const secs = seconds % 60;
+                    return String(hours).padStart(2, '0') + ':' +
+                           String(minutes).padStart(2, '0') + ':' +
+                           String(secs).padStart(2, '0');
+                }
+        
+                // View switching
+                function switchView(view) {
+                    console.log(`<< Switching to view: ${view} >>`);
+                    document.querySelectorAll('.view-switcher button').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    document.querySelectorAll('.view').forEach(viewEl => {
+                        viewEl.classList.remove('active');
+                    });
+        
+                    document.getElementById(`${view}-button`).classList.add('active');
+                    document.getElementById(`${view}-view`).classList.add('active');
+                    console.log(`<< View switched to: ${view} >>`);
+                }
+        
+                function updateTimer() {
+                    const sessionStart = null; // Will be set from the extension
+                    if (sessionStart) {
+                        const elapsed = Math.floor((Date.now() - sessionStart.getTime()) / 1000);
+                        document.getElementById('timer').textContent = formatTime(elapsed);
+                    } else {
+                        document.getElementById('timer').textContent = '00:00:00';
+                    }
+                }
+        
+                // Start the timer when the page loads
+                timerInterval = setInterval(updateTimer, 1000);
+                updateTimer();
+        
+                // Clean up when the webview is disposed
+                window.addEventListener('unload', () => {
+                    clearInterval(timerInterval);
+                });
+        
+                // Expose functions to the global scope
+                window.connectDiscord = connectDiscord;
+                window.reconnectDiscord = reconnectDiscord;
+                window.switchView = switchView;
+            })();
+        </script>
+    </body>
+</html>

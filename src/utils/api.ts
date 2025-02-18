@@ -1,11 +1,12 @@
 import axios from "axios";
 import * as vscode from "vscode";
+require('dotenv').config();
 
 const endpointUrl = ""; // Use a site like https://render.com to store the api call to the database.
 
 // Function to send session data
 export async function sendSessionData(
-    userId: string, 
+    userId: string,
     username: string,
     duration: number,
     sessionDate: string,
@@ -107,9 +108,43 @@ export async function getLeaderboard() {
 export async function getUserProfile(userId: string) {
     try {
         const response = await axios.get(`${endpointUrl}/user-profile/${userId}`);
-        return response.data; // Assuming the API returns the profile data in the response
+        return response.data;
     } catch (error) {
         console.error("<< Failed to fetch user profile:", error);
-        return null; // Return null if there's an error
+        return null;
+    }
+}
+
+export async function getStreakData(userId: string) {
+    try {
+        const response = await axios.get(`${endpointUrl}/streak/${userId}`);
+        return response.data;
+    } catch (error) {
+        console.error("<< Failed to fetch streak data:", error);
+        return { currentStreak: 0, longestStreak: 0 };
+    }
+}
+
+export async function getLanguageDurations(userId: string) {
+    try {
+        const response = await axios.get(`${endpointUrl}/languages/${userId}`);
+        return response.data;
+    } catch (error) {
+        console.error("<< Failed to fetch language durations:", error);
+        return {};
+    }
+}
+
+export async function updateStreak(userId: string, newStreakData: {
+    currentStreak: number;
+    longestStreak: number;
+}) {
+    try {
+        await axios.post(`${endpointUrl}/update-streak`, {
+            userId,
+            ...newStreakData
+        });
+    } catch (error) {
+        console.error("<< Failed to update streak:", error);
     }
 }

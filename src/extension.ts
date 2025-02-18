@@ -44,6 +44,22 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.window.showErrorMessage("Discord ID is required. Click the status bar button to link.");
   }
 
+  // Command to reconnect Discord
+  context.subscriptions.push(
+    vscode.commands.registerCommand("extension.reconnectDiscord", async () => {
+      const discordId = context.globalState.get<string>("discordId");
+      if (!discordId) {
+        vscode.window.showErrorMessage("No Discord ID found. Please link your Discord account first.");
+        return;
+      }
+
+      const isValid = await checkAndValidateUserId(discordId);
+      if (isValid) {
+        vscode.window.showInformationMessage("Discord account reconnected successfully!");
+      }
+    })
+  );
+
   // Command to update/link Discord ID
   context.subscriptions.push(
     vscode.commands.registerCommand("extension.updateDiscordId", async () => {

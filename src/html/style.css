@@ -1,0 +1,98 @@
+body {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.view-switcher {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.view-switcher button {
+    flex: 1;
+    padding: 10px;
+    background: #2c2f33;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.view-switcher button.active {
+    background: #5865F2;
+}
+
+.view {
+    display: none;
+}
+
+.view.active {
+    display: block;
+}
+
+.header {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.connect-button {
+    padding: 10px 20px;
+    background: #5865F2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.leaderboard {
+    margin-top: 20px;
+}
+
+.user-row {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+    padding: 10px;
+    background: linear-gradient(#131313, #131313) padding-box, linear-gradient(145deg, #131313, #4A81E6) border-box;
+    border: 1px solid transparent;
+    border-radius: 3px;
+
+    span {
+        margin-left: 5px;
+    }
+}
+
+.medal {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+}
+
+.border-session {
+    animation: spin 2.5s infinite linear;
+    background:
+        linear-gradient(to bottom, #131313, #131313) padding-box,
+        conic-gradient(from var(--bg-angle) in oklch longer hue,
+            oklch(0.85 0.37 0) 0 0) border-box;
+
+    border: 2px solid transparent;
+    font-size: 24px;
+    font-weight: bold;
+    margin: 20px 0;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+@property --bg-angle {
+    inherits: false;
+    initial-value: 0deg;
+    syntax: "<angle>";
+}
+
+@keyframes spin {
+    to {
+        --bg-angle: 360deg;
+    }
+}

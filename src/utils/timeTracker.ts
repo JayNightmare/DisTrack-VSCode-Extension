@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import moment from 'moment';
 
-let sessionStartTime: Date | null = null;
+export let sessionStartTime: Date | null = null;
 let activeLanguageStartTime: Date | null = null;
 let activeLanguage: string | null = null;
 
