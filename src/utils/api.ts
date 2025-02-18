@@ -1,6 +1,5 @@
 import axios from "axios";
 import * as vscode from "vscode";
-require('dotenv').config();
 
 const endpointUrl = ""; // Use a site like https://render.com to store the api call to the database.
 

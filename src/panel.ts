@@ -64,8 +64,8 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
         this._view.webview.html = await this.getHtmlContent(isConnected, leaderboard);
     }
 
-    // TODO: Fix connect to discord button
     private async getHtmlContent(isConnected: boolean, leaderboard: any[]): Promise<string> {
+        console.log("<< Getting HTML Content >>");
         // Load the HTML template
         const htmlPath = vscode.Uri.joinPath(this._context.extensionUri, 'src', '/html/panel.html');
         const htmlContent = await vscode.workspace.fs.readFile(htmlPath);
@@ -103,7 +103,11 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
                     <span>${user.username} - ${this.formatTime(user.totalCodingTime)}</span>
                 </div>
             `)
-            .join('') : '';
+            .join('') : `
+                <div class="user-row">
+                    <span>Leaderboard is not available. Try Again Later</span>
+                </div>
+            `;
 
         // Update timer with session start time
         const timerScript = `
