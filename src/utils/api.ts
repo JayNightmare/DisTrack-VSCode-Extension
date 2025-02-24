@@ -1,7 +1,45 @@
 import axios from "axios";
 import * as vscode from "vscode";
+require('dotenv').config();
 
-const endpointUrl = ""; // Use a site like https://render.com to store the api call to the database.
+async function getAPILink() {
+    const linkPath = vscode.Uri.joinPath(
+        vscode.extensions.getExtension('JayNightmare.dis-track')!.extensionUri,
+        'assets',
+        'link.txt'
+    );
+
+    try {
+        const linkData = await vscode.workspace.fs.readFile(linkPath);
+        return Buffer.from(linkData).toString('utf8').trim();
+    } catch (error) {
+        vscode.window.showErrorMessage("<< Failed to read link.txt >>");
+        return "";
+    }
+}
+
+
+async function getBotToken() {
+    const tokenPath = vscode.Uri.joinPath(
+        vscode.extensions.getExtension('JayNightmare.dis-track')!.extensionUri,
+        'assets',
+        'discord.txt'
+    );
+
+    try {
+        const tokenData = await vscode.workspace.fs.readFile(tokenPath);
+        return Buffer.from(tokenData).toString('utf8').trim();
+    } catch (error) {
+        vscode.window.showErrorMessage("<< Failed to read token from discord.txt >>");
+        return "";
+    }
+}
+
+// String to store the API endpoint URL
+let endpointUrl: string;
+
+// Fetch the API endpoint URL from the file
+getAPILink().then(link => endpointUrl = link);
 
 // Function to send session data
 export async function sendSessionData(
@@ -15,7 +53,9 @@ export async function sendSessionData(
         longestStreak: number
     }) {
     try {
-        const response = await axios.post(`${endpointUrl}/coding-session`, {
+        console.log("<< Send Session Data Endpoint: ", endpointUrl, " >>");
+
+        const response = await axios.post(`${endpointUrl ? endpointUrl : "endpoint url"}/coding-session`, {
             userId,
             username,
             duration,
@@ -26,6 +66,7 @@ export async function sendSessionData(
         console.log("<< Data sent successfully:", response.data);
     } catch (error) {
         console.error("<< Failed to send session data: ", error);
+        throw error; // Re-throw to allow calling code to handle the error
     }
 }
 
@@ -33,6 +74,8 @@ export async function sendSessionData(
 function isValidDiscordId(userId: string): boolean {
     return /^\d{15,32}$/.test(userId);
 }
+
+getBotToken().then(token => console.log("<< Bot Token: ", token, " >>"));
 
 // Validate the Discord user ID by checking both format and API verification
 export async function checkAndValidateUserId(userId: string): Promise<boolean> {
@@ -42,8 +85,10 @@ export async function checkAndValidateUserId(userId: string): Promise<boolean> {
     }
 
     try {
+        const botToken = await getBotToken();
+
         const response = await axios.get(`https://discord.com/api/v10/users/${userId}`, {
-            headers: { Authorization: `Bot BOT_TOKEN` },
+            headers: { Authorization: `Bot ${botToken}` },
         });
         
         if (response.status === 200) {
@@ -68,9 +113,10 @@ export async function checkAndValidateUserId(userId: string): Promise<boolean> {
 export async function getDiscordUsername(userId: string): Promise<string | null> {
     try {
         if (userId === null) { return null;}
+        const botToken = await getBotToken();
 
         const response = await axios.get(`https://discord.com/api/v10/users/${userId}`, {
-            headers: { Authorization: `Bot BOT_TOKEN` },
+            headers: { Authorization: `Bot ${botToken}` },
         });
 
         if (response.status === 200) {
@@ -94,8 +140,8 @@ export async function getDiscordUsername(userId: string): Promise<string | null>
 
 export async function getLeaderboard() {
     try {
-        console.log("<< Fetching leaderboard... >>");
-        const response = await axios.get(`${endpointUrl}/leaderboard`);
+        console.log("<< Get Leaderboard Endpoint: ", endpointUrl, " >>");
+        const response = await axios.get(`${endpointUrl ? endpointUrl : "endpoint url"}/leaderboard`);
         return response.data;
     } catch (error) {
         console.error("<< Failed to fetch leaderboard:", error);
@@ -106,6 +152,7 @@ export async function getLeaderboard() {
 // New function to fetch user profile
 export async function getUserProfile(userId: string) {
     try {
+        console.log("<< Get User Profile Endpoint: ", endpointUrl, " >>");
         const response = await axios.get(`${endpointUrl}/user-profile/${userId}`);
         return response.data;
     } catch (error) {
@@ -116,6 +163,7 @@ export async function getUserProfile(userId: string) {
 
 export async function getStreakData(userId: string) {
     try {
+        console.log("<< Get Streak Data Endpoint: ", endpointUrl, " >>");
         const response = await axios.get(`${endpointUrl}/streak/${userId}`);
         return response.data;
     } catch (error) {
@@ -126,6 +174,7 @@ export async function getStreakData(userId: string) {
 
 export async function getLanguageDurations(userId: string) {
     try {
+        console.log("<< Get Language Durations Endpoint: ", endpointUrl, " >>");
         const response = await axios.get(`${endpointUrl}/languages/${userId}`);
         return response.data;
     } catch (error) {
@@ -139,6 +188,7 @@ export async function updateStreak(userId: string, newStreakData: {
     longestStreak: number;
 }) {
     try {
+        console.log("<< Update Streak Endpoint: ", endpointUrl, " >>");
         await axios.post(`${endpointUrl}/update-streak`, {
             userId,
             ...newStreakData

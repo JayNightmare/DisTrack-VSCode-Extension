@@ -2,7 +2,7 @@
   "name": "dis-track",
   "displayName": "Dis.Track | Discord VSCode Tracker",
   "description": "This will track your time in VSCode. Add the bot to your server to check your progress!",
-  "version": "0.6.8",
+  "version": "0.6.9",
   "publisher": "JayNightmare",
   "author": {
     "name": "Jay",
@@ -106,6 +106,7 @@
     "@typescript-eslint/parser": "^8.24.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
+    "dotenv-webpack": "^8.1.0",
     "eslint": "^9.20.0",
     "ts-loader": "^9.5.1",
     "typescript": "^5.7.3",

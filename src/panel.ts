@@ -3,6 +3,15 @@ import { getDiscordUsername, getLeaderboard, getStreakData, getLanguageDurations
 import { sessionStartTime } from "./utils/timeTracker";
 
 export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
+    public async updateWebviewContent(status: string) {
+        if (this._view) {
+            this._view.webview.postMessage({
+                command: 'reconnectStatus',
+                success: status === 'success',
+            });
+        }
+    }
+
     private _view?: vscode.WebviewView;
     private readonly _context: vscode.ExtensionContext;
 
@@ -66,6 +75,7 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
 
     private async getHtmlContent(isConnected: boolean, leaderboard: any[]): Promise<string> {
         console.log("<< Getting HTML Content >>");
+
         // Load the HTML template
         const htmlPath = vscode.Uri.joinPath(this._context.extensionUri, 'src', '/html/panel.html');
         const htmlContent = await vscode.workspace.fs.readFile(htmlPath);
@@ -74,40 +84,88 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
         // Update connection status
         const connectButtonContainer = isConnected ? 'none' : 'block';
         
+        // Get user data
+        const discordId = this._context.globalState.get<string>("discordId");
+        const username = discordId ? await getDiscordUsername(discordId) : '';
+        const streakData = discordId ? await getStreakData(discordId) : { currentStreak: 0, longestStreak: 0 };
+        const languageDurations = discordId ? await getLanguageDurations(discordId) : {};
+        const userIndex = leaderboard.findIndex(user => user.id === discordId) + 2;
+        const userRank = userIndex >= 0 ? userIndex : 'N/A';
+        const userMedal = (typeof userRank === 'number' && userRank <= 3) ? this.getMedalIcon(userRank) : '';
+
+
         // Update profile content
         const profileContent = isConnected ? `
             <div class="profile-section">
                 <div class="profile-item">
-                    <strong>Username:</strong> ${await getDiscordUsername(this._context.globalState.get<string>("discordId")!)}
+                    <strong>Username:</strong> ${username}
                 </div>
+                <br>
                 <div class="profile-item">
-                    <strong>Current Streak:</strong> ${(await getStreakData(this._context.globalState.get<string>("discordId")!)).currentStreak} days
+                    <strong>Current Streak:</strong> ${streakData.currentStreak} days
                 </div>
+                <br>
                 <div class="profile-item">
-                    <strong>Longest Streak:</strong> ${(await getStreakData(this._context.globalState.get<string>("discordId")!)).longestStreak} days
+                    <strong>Longest Streak:</strong> ${streakData.longestStreak} days
                 </div>
-                <div class="profile-item">
+                <br>
+                <div class="profile-item"></div>
                     <strong>Languages:</strong>
-                    ${Object.entries(await getLanguageDurations(this._context.globalState.get<string>("discordId")!))
-                        .map(([lang, duration]) => `${lang}: ${this.formatTime(duration as number)}`)
-                        .join('<br>')}
+                    <ul class="language-list">
+                    ${Object.entries(languageDurations)
+                        .map(([lang, duration]) => `<li>${lang}: ${this.formatTime(duration as number)}</li>`)
+                        .join('')}
+                    </ul>
+                </div>
+                <br>
+                <div class="profile-item">
+                    <strong>Leaderboard Ranking:</strong> ${userRank !== 'N/A' ? `${userRank} ${userMedal}` : 'N/A'}
                 </div>
             </div>
         ` : '<p>Connect to Discord to view your profile</p>';
 
         // Update leaderboard content
-        const leaderboardContent = isConnected ? leaderboard
-            .map((user, index) => `
-                <div class="user-row">
-                    ${this.getMedalIcon(index + 1)}
-                    <span>${user.username} - ${this.formatTime(user.totalCodingTime)}</span>
-                </div>
-            `)
-            .join('') : `
+        let leaderboardContent = '';
+        const currentUserId = discordId;
+        if (isConnected && leaderboard.length > 0) {
+            // Find current user in leaderboard using 'id'
+            const currentUserIndex = leaderboard.findIndex(user => user.userId === currentUserId) + 1;
+            
+            // Get top 10 users
+            const top10 = leaderboard.slice(0, 10);
+            
+            // Generate top 10 entries
+            leaderboardContent = top10
+                .map((user, index) => `
+                    <div class="user-row ${user.userId === currentUserId ? 'current-user' : ''}">
+                        ${this.getMedalIcon(index + 1)}
+                        <span>${user.username} - ${this.formatTime(user.totalCodingTime)}</span>
+                    </div>
+                `)
+                .join('');
+            
+            // Add ellipsis if there are more than 10 users
+            if (leaderboard.length > 10) {
+                leaderboardContent += `
+                    <div class="ellipsis">...</div>
+                `;
+            }
+            
+            // Add current user at bottom if not in top 10
+            if (currentUserIndex > 10) {
+                leaderboardContent += `
+                    <div class="user-row current-user">
+                        <span>${currentUserIndex + 1}. ${leaderboard[currentUserIndex].username} - ${this.formatTime(leaderboard[currentUserIndex].totalCodingTime)}</span>
+                    </div>
+                `;
+            }
+        } else {
+            leaderboardContent = `
                 <div class="user-row">
                     <span>Leaderboard is not available. Try Again Later</span>
                 </div>
             `;
+        }
 
         // Update timer with session start time
         const timerScript = `

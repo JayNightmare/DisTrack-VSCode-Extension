@@ -9,7 +9,7 @@ let currentStreak = 0;
 let longestStreak = 0;
 let lastSessionDate: string | null = null;
 
-let languageDurations: Record<string, number> = {}; 
+let languageDurations: Record<string, number> = {};
 
 // Start the coding session
 export function startSession() {

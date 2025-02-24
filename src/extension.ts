@@ -47,15 +47,26 @@ export async function activate(context: vscode.ExtensionContext) {
   // Command to reconnect Discord
   context.subscriptions.push(
     vscode.commands.registerCommand("extension.reconnectDiscord", async () => {
+      console.log("<< Reconnect Discord button clicked >>");
       const discordId = context.globalState.get<string>("discordId");
+      
       if (!discordId) {
+        console.log("<< No Discord ID found in global state >>");
         vscode.window.showErrorMessage("No Discord ID found. Please link your Discord account first.");
         return;
       }
 
+      console.log(`<< Found Discord ID in global state: ${discordId} >>`);
+      console.log("<< Validating Discord ID with API... >>");
+
       const isValid = await checkAndValidateUserId(discordId);
+      
       if (isValid) {
+        console.log("<< Discord ID validation successful >>");
         vscode.window.showInformationMessage("Discord account reconnected successfully!");
+        discordCodingViewProvider.updateWebviewContent("success");
+      } else {
+        console.log("<< Discord ID validation failed >>");
       }
     })
   );
@@ -137,30 +148,30 @@ function applyConfigurationSettings() {
 export async function deactivate() {
   stopSessionTimer();
   stopRichPresence();
-
-  const duration = await endSession();
-  const discordId = extensionContext.globalState.get<string>("discordId");
-  let discordUsername: string | null = null;
-  if (discordId) {
-    discordUsername = await getDiscordUsername(discordId);
-  }
-  const lastSessionDate = new Date().toISOString();
-  const languages = getLanguageDurations();
-  const streakData = getStreakData();
-
-  console.log(`<< Discord User Id: ${discordId} >>`);
-  console.log(`<< Discord Username: ${discordUsername} >>`);
-  console.log(`<< Session duration: ${duration} seconds >>`);
-  console.log(`<< Last session date: ${lastSessionDate} >>`);
-  console.log(`<< Session languages: ${JSON.stringify(languages)} >>`);
-  console.log(`<< Streak Data: ${JSON.stringify(streakData)} >>`);
-
-  if (!discordId || !duration) {
-    console.log("<< Error: Missing required data. Discord ID or Duration is null >>");
-    return;
-  }
-
+  
   try {
+    const duration = await endSession();
+    const discordId = extensionContext.globalState.get<string>("discordId");
+    let discordUsername: string | null = null;
+    if (discordId) {
+      discordUsername = await getDiscordUsername(discordId);
+    }
+    const lastSessionDate = new Date().toISOString();
+    const languages = getLanguageDurations();
+    const streakData = getStreakData();
+
+    console.log(`<< Discord User Id: ${discordId} >>`);
+    console.log(`<< Discord Username: ${discordUsername} >>`);
+    console.log(`<< Session duration: ${duration} seconds >>`);
+    console.log(`<< Last session date: ${lastSessionDate} >>`);
+    console.log(`<< Session languages: ${JSON.stringify(languages)} >>`);
+    console.log(`<< Streak Data: ${JSON.stringify(streakData)} >>`);
+
+    if (!discordId || !duration) {
+      console.log("<< Error: Missing required data. Discord ID or Duration is null >>");
+      return;
+    }
+
     console.log("<< Sending session data to Discord... >>");
     await sendSessionData(
       discordId,

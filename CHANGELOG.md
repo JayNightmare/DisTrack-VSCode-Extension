@@ -5,6 +5,15 @@ All notable changes to the "DisTrack" extension will be documented in this file.
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 ## Patch Notes
+# v0.6.9
+* Fixed Auth bot token issue
+* Added Profile tab
+* Added new styling to leaderboard
+* New API endpoint for fetching data
+* Extension reformatting
+* Panel.ts reformatting
+* Using .txt file to grab bot token and endpoint url.
+
 # v0.6.8
 * Fixed extension load issue.
   * I was dumb and did `npm run compile` instead of `npm run package`. stfu
