@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { DiscordCodingViewProvider } from "./panel";
 import { startSession, endSession, getLanguageDurations, getStreakData } from "./utils/timeTracker";
 import { sendSessionData, checkAndValidateUserId, getDiscordUsername } from "./utils/api";
-import { startRichPresence, stopRichPresence } from "./utils/rpcDiscord";
+import { startRichPresence, stopRichPresence, setActivity } from "./utils/rpcDiscord";
 
 let extensionContext: vscode.ExtensionContext;
 let sessionStartTime: Date | null = null;
@@ -31,7 +31,6 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   // Create status bar for linking Discord
-  
   let discordId = context.globalState.get<string>("discordId");
   updateStatusBar(statusBar, discordId);
   context.subscriptions.push(statusBar);
@@ -67,6 +66,24 @@ export async function activate(context: vscode.ExtensionContext) {
         discordCodingViewProvider.updateWebviewContent("success");
       } else {
         console.log("<< Discord ID validation failed >>");
+      }
+    })
+  );
+
+  // Command to refresh Discord RPC
+  context.subscriptions.push(
+    vscode.commands.registerCommand("extension.refreshRPC", async () => {
+      const enableRichPresence = vscode.workspace.getConfiguration("extension").get<boolean>("enableRichPresence");
+      if (enableRichPresence) {
+        try {
+          await setActivity();
+          vscode.window.showInformationMessage("Discord RPC activity refreshed successfully!");
+        } catch (error) {
+          console.error("<< Failed to refresh Discord RPC activity >>", error);
+          vscode.window.showErrorMessage("Failed to refresh Discord RPC activity");
+        }
+      } else {
+        vscode.window.showWarningMessage("Rich Presence is currently disabled in settings");
       }
     })
   );

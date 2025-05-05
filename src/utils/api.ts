@@ -3,8 +3,13 @@ import * as vscode from "vscode";
 require('dotenv').config();
 
 async function getAPILink() {
+    const extension = vscode.extensions.getExtension('JayNightmare.dis-track');
+    if (!extension) {
+        vscode.window.showErrorMessage("<< Extension 'JayNightmare.dis-track' not found >>");
+        return "";
+    }
     const linkPath = vscode.Uri.joinPath(
-        vscode.extensions.getExtension('JayNightmare.dis-track')!.extensionUri,
+        extension.extensionUri,
         'assets',
         'link.txt'
     );
@@ -55,7 +60,7 @@ export async function sendSessionData(
     try {
         console.log("<< Send Session Data Endpoint: ", endpointUrl, " >>");
 
-        const response = await axios.post(`${endpointUrl ? endpointUrl : "endpoint url"}/coding-session`, {
+        const response = await axios.post(`${endpointUrl}/coding-session`, {
             userId,
             username,
             duration,
@@ -141,7 +146,7 @@ export async function getDiscordUsername(userId: string): Promise<string | null>
 export async function getLeaderboard() {
     try {
         console.log("<< Get Leaderboard Endpoint: ", endpointUrl, " >>");
-        const response = await axios.get(`${endpointUrl ? endpointUrl : "endpoint url"}/leaderboard`);
+        const response = await axios.get(`${endpointUrl}/leaderboard`);
         return response.data;
     } catch (error) {
         console.error("<< Failed to fetch leaderboard:", error);

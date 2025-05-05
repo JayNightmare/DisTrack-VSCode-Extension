@@ -2,14 +2,14 @@ import * as DiscordRPC from "discord-rpc";
 import * as vscode from "vscode";
 import * as path from "path";
 
-const clientId = "1305258645906526328"; // Your Discord client ID
+const clientId = "1305258645906526328"; // Discord Client ID
 const rpc = new DiscordRPC.Client({ transport: "ipc" });
 let rpcInterval: NodeJS.Timeout | null = null;
 
 // Define sessionStartTime in extension.ts and pass it to setActivity when needed
 let sessionStartTime: Date | null = new Date();
 
-async function setActivity() {
+export async function setActivity() {
     const editor = vscode.window.activeTextEditor;
 
     if (editor && sessionStartTime) {
@@ -32,15 +32,19 @@ async function setActivity() {
         const smallImageText = language.charAt(0).toUpperCase() + language.slice(1);
 
         try {
+            const maxLines = editor.document.lineCount; // Get the total number of lines in the file
+
             await rpc.setActivity({
-                details: `Editing ${fileName} | Line: ${lineNumber}`,
+                details: `Editing ${fileName} in VSCode`,
                 state: `Language: ${capitalizedLanguage}`,
                 startTimestamp: Math.floor(sessionStartTime.getTime() / 1000),
                 largeImageKey: "vscode",
                 largeImageText: "Visual Studio Code",
                 smallImageKey: smallImageKey, // Use the language-specific image if available
                 smallImageText: smallImageText, // Capitalized language name for the tooltip
-                instance: false,
+                instance: true,
+                partySize: lineNumber,
+                partyMax: maxLines, // Set the max number of lines in the file
             });
             console.log("<< Discord RPC activity updated >>");
         } catch (error) {

@@ -171,7 +171,7 @@
 
         <!-- Session Timer -->
         <div class="header">
-            <h2>Session Timer</h2>
+            <h2 align="center">Session Timer</h2>
             <div class="border-session" id="timer">
                 00:00:00
             </div>
@@ -203,7 +203,12 @@
         </div>
         <div style="text-align: center; margin-top: 50px;">
             <button class="connect-button" onclick="window.reconnectDiscord()" id="reconnect-button">
-                <span id="reconnect-text">Re-link Discord</span>
+                <span id="reconnect-text">Refresh</span>
+            </button>
+        </div>
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="connect-button" onclick="window.refreshRPC()" id="refresh-rpc-button">
+                Refresh RPC Activity
             </button>
         </div>
         <script>
@@ -275,9 +280,14 @@
                 });
         
                 // Expose functions to the global scope
+                function refreshRPC() {
+                    vscode.postMessage({ command: 'refreshRPC' });
+                }
+
                 window.connectDiscord = connectDiscord;
                 window.reconnectDiscord = reconnectDiscord;
                 window.switchView = switchView;
+                window.refreshRPC = refreshRPC;
             })();
         </script>
     </body>
