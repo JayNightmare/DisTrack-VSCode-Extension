@@ -60,14 +60,19 @@ export async function sendSessionData(
     try {
         console.log("<< Send Session Data Endpoint: ", endpointUrl, " >>");
 
-        const response = await axios.post(`${endpointUrl}/coding-session`, {
-            userId,
-            username,
-            duration,
-            sessionDate,
-            languages,
-            streakData
-        });
+        const response = await axios.post(`${endpointUrl}/coding-session`,
+            {
+                userId,
+                username,
+                duration,
+                sessionDate,
+                languages,
+                streakData,
+            },
+            {
+                headers: { Authorization: `${process.env.API_KEY}` },
+            }
+        );
         console.log("<< Data sent successfully:", response.data);
     } catch (error) {
         console.error("<< Failed to send session data: ", error);
@@ -146,7 +151,9 @@ export async function getDiscordUsername(userId: string): Promise<string | null>
 export async function getLeaderboard() {
     try {
         console.log("<< Get Leaderboard Endpoint: ", endpointUrl, " >>");
-        const response = await axios.get(`${endpointUrl}/leaderboard`);
+        const response = await axios.get(`${endpointUrl}/leaderboard`, {
+            headers: { Authorization: `${process.env.API_KEY}` },
+        });
         return response.data;
     } catch (error) {
         console.error("<< Failed to fetch leaderboard:", error);
@@ -158,7 +165,9 @@ export async function getLeaderboard() {
 export async function getUserProfile(userId: string) {
     try {
         console.log("<< Get User Profile Endpoint: ", endpointUrl, " >>");
-        const response = await axios.get(`${endpointUrl}/user-profile/${userId}`);
+        const response = await axios.get(`${endpointUrl}/user-profile/${userId}`, {
+            headers: { Authorization: `${process.env.API_KEY}` },
+        });
         return response.data;
     } catch (error) {
         console.error("<< Failed to fetch user profile:", error);
@@ -169,7 +178,9 @@ export async function getUserProfile(userId: string) {
 export async function getStreakData(userId: string) {
     try {
         console.log("<< Get Streak Data Endpoint: ", endpointUrl, " >>");
-        const response = await axios.get(`${endpointUrl}/streak/${userId}`);
+        const response = await axios.get(`${endpointUrl}/streak/${userId}`, {
+            headers: { Authorization: `${process.env.API_KEY}` },
+        });
         return response.data;
     } catch (error) {
         console.error("<< Failed to fetch streak data:", error);
@@ -180,7 +191,9 @@ export async function getStreakData(userId: string) {
 export async function getLanguageDurations(userId: string) {
     try {
         console.log("<< Get Language Durations Endpoint: ", endpointUrl, " >>");
-        const response = await axios.get(`${endpointUrl}/languages/${userId}`);
+        const response = await axios.get(`${endpointUrl}/languages/${userId}`, {
+            headers: { Authorization: `${process.env.API_KEY}` },
+        });
         return response.data;
     } catch (error) {
         console.error("<< Failed to fetch language durations:", error);
