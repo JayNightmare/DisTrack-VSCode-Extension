@@ -192,7 +192,7 @@ export async function deactivate() {
     console.log("<< Sending session data to Discord... >>");
     await sendSessionData(
       discordId,
-      discordUsername ?? "",
+      discordUsername ?? "EFU",
       duration,
       lastSessionDate,
       languages,

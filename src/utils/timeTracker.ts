@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import moment from 'moment';
+const { updateStreak } = require('./api.ts');
 
 export let sessionStartTime: Date | null = null;
 let activeLanguageStartTime: Date | null = null;
@@ -35,9 +35,6 @@ export function endSession(): number | null {
         console.log(`<< Total session duration: ${totalDuration} seconds >>`);
         console.log(`<< Language durations: ${JSON.stringify(languageDurations)} >>`);
 
-        // Update streaks
-        updateStreak(sessionEndTime);
-
         // Reset session variables
         sessionStartTime = null;
         activeLanguageStartTime = null;
@@ -68,30 +65,6 @@ function setActiveLanguage() {
         activeLanguageStartTime = now;
         console.log(`<< Switched active language to: ${currentLanguage} >>`);
     }
-}
-
-// Update streak based on last session date
-function updateStreak(sessionEndTime: Date) {
-    const today = moment().startOf('day');
-    const lastSession = moment(lastSessionDate);
-
-    if (lastSession.isSame(today.clone().subtract(1, 'days'), 'day')) {
-        // Continue streak
-        currentStreak++;
-    } else if (!lastSession.isSame(today, 'day')) {
-        // Reset streak
-        currentStreak = 1;
-    }
-
-    // Update longest streak
-    if (currentStreak > longestStreak) {
-        longestStreak = currentStreak;
-    }
-
-    // Update last session date
-    lastSessionDate = today.toISOString();
-
-    console.log(`<< Current Streak: ${currentStreak}, Longest Streak: ${longestStreak}, Last Session Date: ${lastSessionDate} >>`);
 }
 
 // Get streak data

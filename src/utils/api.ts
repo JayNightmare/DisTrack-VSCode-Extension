@@ -187,18 +187,3 @@ export async function getLanguageDurations(userId: string) {
         return {};
     }
 }
-
-export async function updateStreak(userId: string, newStreakData: {
-    currentStreak: number;
-    longestStreak: number;
-}) {
-    try {
-        console.log("<< Update Streak Endpoint: ", endpointUrl, " >>");
-        await axios.post(`${endpointUrl}/update-streak`, {
-            userId,
-            ...newStreakData
-        });
-    } catch (error) {
-        console.error("<< Failed to update streak:", error);
-    }
-}
