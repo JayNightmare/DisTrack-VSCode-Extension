@@ -78,8 +78,6 @@ export async function sendSessionData(
         longestStreak: number
     }) {
     try {
-        console.log("<< Send Session Data Endpoint: ", endpointUrl, " >>");
-
         const response = await axios.post(`${endpointUrl}/coding-session`,
             {
                 userId,
@@ -104,9 +102,6 @@ export async function sendSessionData(
 function isValidDiscordId(userId: string): boolean {
     return /^\d{15,32}$/.test(userId);
 }
-
-getBotToken().then(token => console.log("<< Bot Token: ", token, " >>"));
-getAPIToken().then(token => console.log("<< API Token: ", token, " >>"));
 
 // Validate the Discord user ID by checking both format and API verification
 export async function checkAndValidateUserId(userId: string): Promise<boolean> {
@@ -171,7 +166,6 @@ export async function getDiscordUsername(userId: string): Promise<string | null>
 
 export async function getLeaderboard() {
     try {
-        console.log("<< Get Leaderboard Endpoint: ", endpointUrl, " >>");
         const response = await axios.get(`${endpointUrl}/leaderboard`, {
             headers: { Authorization: `${apiToken}` },
         });
@@ -185,7 +179,6 @@ export async function getLeaderboard() {
 // New function to fetch user profile
 export async function getUserProfile(userId: string) {
     try {
-        console.log("<< Get User Profile Endpoint: ", endpointUrl, " >>");
         const response = await axios.get(`${endpointUrl}/user-profile/${userId}`, {
             headers: { Authorization: `${apiToken}` },
         });
@@ -198,7 +191,6 @@ export async function getUserProfile(userId: string) {
 
 export async function getStreakData(userId: string) {
     try {
-        console.log("<< Get Streak Data Endpoint: ", endpointUrl, " >>");
         const response = await axios.get(`${endpointUrl}/streak/${userId}`, {
             headers: { Authorization: `${apiToken}` },
         });
@@ -211,7 +203,6 @@ export async function getStreakData(userId: string) {
 
 export async function getLanguageDurations(userId: string) {
     try {
-        console.log("<< Get Language Durations Endpoint: ", endpointUrl, " >>");
         const response = await axios.get(`${endpointUrl}/languages/${userId}`, {
             headers: { Authorization: `${apiToken}` },
         });
