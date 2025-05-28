@@ -5,5 +5,4 @@ node_modules
 *.vsix
 .env
 copy/
-discord.txt
-link.txt
+assets/*.txt

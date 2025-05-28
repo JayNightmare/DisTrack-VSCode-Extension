@@ -40,11 +40,31 @@ async function getBotToken() {
     }
 }
 
+async function getAPIToken() {
+    const tokenPath = vscode.Uri.joinPath(
+        vscode.extensions.getExtension('JayNightmare.dis-track')!.extensionUri,
+        'assets',
+        'api.txt'
+    );
+
+    try {
+        const tokenData = await vscode.workspace.fs.readFile(tokenPath);
+        return Buffer.from(tokenData).toString('utf8').trim();
+    } catch (error) {
+        vscode.window.showErrorMessage("<< Failed to read token from discord.txt >>");
+        return "";
+    }
+}
+
 // String to store the API endpoint URL
 let endpointUrl: string;
 
 // Fetch the API endpoint URL from the file
 getAPILink().then(link => endpointUrl = link);
+
+// Fetch the API token from the file
+let apiToken: string;
+getAPIToken().then(token => { apiToken = token; });
 
 // Function to send session data
 export async function sendSessionData(
@@ -70,7 +90,7 @@ export async function sendSessionData(
                 streakData,
             },
             {
-                headers: { Authorization: `${process.env.API_KEY}` },
+                headers: { Authorization: `${apiToken}` },
             }
         );
         console.log("<< Data sent successfully:", response.data);
@@ -86,6 +106,7 @@ function isValidDiscordId(userId: string): boolean {
 }
 
 getBotToken().then(token => console.log("<< Bot Token: ", token, " >>"));
+getAPIToken().then(token => console.log("<< API Token: ", token, " >>"));
 
 // Validate the Discord user ID by checking both format and API verification
 export async function checkAndValidateUserId(userId: string): Promise<boolean> {
@@ -152,7 +173,7 @@ export async function getLeaderboard() {
     try {
         console.log("<< Get Leaderboard Endpoint: ", endpointUrl, " >>");
         const response = await axios.get(`${endpointUrl}/leaderboard`, {
-            headers: { Authorization: `${process.env.API_KEY}` },
+            headers: { Authorization: `${apiToken}` },
         });
         return response.data;
     } catch (error) {
@@ -166,7 +187,7 @@ export async function getUserProfile(userId: string) {
     try {
         console.log("<< Get User Profile Endpoint: ", endpointUrl, " >>");
         const response = await axios.get(`${endpointUrl}/user-profile/${userId}`, {
-            headers: { Authorization: `${process.env.API_KEY}` },
+            headers: { Authorization: `${apiToken}` },
         });
         return response.data;
     } catch (error) {
@@ -179,7 +200,7 @@ export async function getStreakData(userId: string) {
     try {
         console.log("<< Get Streak Data Endpoint: ", endpointUrl, " >>");
         const response = await axios.get(`${endpointUrl}/streak/${userId}`, {
-            headers: { Authorization: `${process.env.API_KEY}` },
+            headers: { Authorization: `${apiToken}` },
         });
         return response.data;
     } catch (error) {
@@ -192,7 +213,7 @@ export async function getLanguageDurations(userId: string) {
     try {
         console.log("<< Get Language Durations Endpoint: ", endpointUrl, " >>");
         const response = await axios.get(`${endpointUrl}/languages/${userId}`, {
-            headers: { Authorization: `${process.env.API_KEY}` },
+            headers: { Authorization: `${apiToken}` },
         });
         return response.data;
     } catch (error) {
