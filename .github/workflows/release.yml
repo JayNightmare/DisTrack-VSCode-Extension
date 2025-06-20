@@ -1,57 +1,129 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+    push:
+        tags:
+            - "v*"
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
+    release:
+        runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-    - name: Use Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20.x'
-        cache: 'npm'
+            - name: Use Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20.x"
+                  cache: "npm"
 
-    - name: Install dependencies
-      run: npm ci
+            - name: Install dependencies
+              run: npm ci
 
-    - name: Run linting
-      run: npm run lint
+            - name: Run linting
+              run: npm run lint
 
-    - name: Compile TypeScript
-      run: npm run compile
+            - name: Compile TypeScript
+              run: npm run compile
 
-    # - name: Run tests
-    #   run: npm run test
+            # - name: Run tests
+            #   run: npm run test
 
-    - name: Build extension
-      run: npm run package
+            - name: Build extension
+              run: npm run package
 
-    - name: Package VSIX
-      run: npx vsce package
+            - name: Package VSIX
+              run: npx vsce package
 
-    - name: Create Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: |
-          *.vsix
-          dist/
-        generate_release_notes: true
-        draft: true
-        prerelease: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+            - name: Generate Release Notes
+              id: generate_notes
+              run: |
+                  VERSION=${GITHUB_REF#refs/tags/}
+                  CHANGELOG_CONTENT=$(cat CHANGELOG.md)
 
-    - name: Upload VSIX artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: extension-vsix
-        path: '*.vsix'
-        retention-days: 30 
+                  cat > release_notes.md << 'EOF'
+                  # DisTrack v$VERSION Release
+
+                  **Full Changelog**: https://github.com/JayNightmare/DisTrack-VSCode-Extension/blob/master/CHANGELOG.md
+
+                  ## Patch Notes
+                  $CHANGELOG_CONTENT
+
+                  # How to use release
+                  1. Unzip folder
+                  2. Open folder in VSCode
+                  3. Open Terminal inside VSCode -> Use Command Prompt or Git Bash
+                  4. Run the following
+                     - `npm install` -> Doesn't work? Install [Node](https://nodejs.org/en)
+                     - `mkdir assets` -> Creates a folder called assets
+                     - `cd assets` -> Goes inside the assets folder
+                     - `type nul > link.txt` -> Creates an empty file called link.txt
+                     - `type nul > discord.txt` -> Creates an empty file called discord.txt
+                  5. Open link.txt and enter your back-end server -> Don't have one? Get one [here](https://github.com/JayNightmare/VSCode-Endpoint-Server-Deployment)
+                  6. Open discord.txt and enter your discord bot token -> Don't have one? Get one [here](https://discord.com/developers/applications)
+                  7. Go to the `Run and Debug` tab in VSCode and make sure that `Run Extension` is present
+                      - If it doesn't appear, go to .vscode and open launch.json.
+                      - Ensure launch.json has this code:
+                   ```
+                  {
+                  	"version": "0.2.0",
+                  	"configurations": [
+                  		{
+                  			"name": "Run Extension",
+                  			"type": "extensionHost",
+                  			"request": "launch",
+                  			"args": [
+                  				"--extensionDevelopmentPath=${workspaceFolder}"
+                  			],
+                  			"outFiles": [
+                  				"${workspaceFolder}/dist/**/*.js"
+                  			],
+                  			"preLaunchTask": "${defaultBuildTask}"
+                  		}
+                  	]
+                  }
+                   ```
+                  8. Before running, put `<<` in the filter so it only shows the extension
+                  9. A successful run should show no read text.
+                  10. Open Terminal and run `vsce`
+                  11. Run `vsce package`, this will create the vscode extension. Should output as `dis-track-$VERSION.vsix`
+                  12. Press `Ctrl+Shift+P` (or click the top search bar than press `>`) and type `Extensions: Install From VSIX`
+                  13. Open the .vsix file
+                  14. Enjoy your very own Dis.Track Extension
+
+                  # Different Errors you could encounter:
+
+                  Error Name  | Reason | Solution 
+                  ------------- | ------------- | -------------
+                  `Failed to send session data:  TypeError: Invalid URL`  | Your link.txt url does not work | Check your url is accessible. If it needs a header, you will need to adjust the api.ts file to account for this. If url is correct, use [Postman](https://web.postman.co/workspace/create) and try sending data to it using `POST [endpoint url]/coding-sessions`. Once you are able to send data, retry extension.
+                  `Failed to fetch language durations: TypeError: Invalid URL`  | Your link.txt url does not work | Check your url is accessible. If it needs a header, you will need to adjust the api.ts file to account for this. If url is correct, use [Postman](https://web.postman.co/workspace/create) and try fetching data to it. Do `GET [endpoint url]/user-profile/:userId`. Once you are able to receive data, retry extension.
+                  `Failed to fetch streak data: TypeError: Invalid URL` | Your link.txt url does not work | Check your url is accessible. If it needs a header, you will need to adjust the api.ts file to account for this.
+                  `Failed to fetch leaderboard: TypeError: Invalid URL` | Your link.txt url does not work | Check your url is accessible. If it needs a header, you will need to adjust the api.ts file to account for this. If url is correct, use [Postman](https://web.postman.co/workspace/create) and try fetching data to it. Do `GET [endpoint url]/leaderboard`. Once you are able to receive data, retry extension.
+                  `Bot Token Null` | Your discord.txt Bot Token doesn't work | Check that the bot token is valid. To get one, go to the application > Settings > Bot > Token
+                  EOF
+
+                  echo "notes<<EOF" >> $GITHUB_OUTPUT
+                  cat release_notes.md >> $GITHUB_OUTPUT
+                  echo "EOF" >> $GITHUB_OUTPUT
+
+            - name: Create Release
+              uses: softprops/action-gh-release@v2
+              env:
+                  GITHUB_TOKEN: ${{ secrets.TOKEN }}
+              with:
+                  files: |
+                      *.vsix
+                      dist/
+                  body: ${{ steps.generate_notes.outputs.notes }}
+                  generate_release_notes: false
+                  draft: true
+                  prerelease: true
+
+            - name: Upload VSIX artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: extension-vsix
+                  path: "*.vsix"
+                  retention-days: 30

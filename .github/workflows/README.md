@@ -12,10 +12,9 @@ This directory contains GitHub Actions workflows for the DisTrack VS Code Extens
 - Installs dependencies with `npm ci`
 - Runs ESLint for code quality
 - Compiles TypeScript code
-- Runs tests
 - Builds the extension
 - Uploads build artifacts
-- Performs security audits
+- Performs security audits (high level only)
 
 ### 🏷️ Release (`release.yml`)
 **Triggers:** Push of version tags (e.g., `v1.0.0`)
@@ -23,7 +22,11 @@ This directory contains GitHub Actions workflows for the DisTrack VS Code Extens
 
 - Builds and tests the extension
 - Creates a VSIX package
-- Generates a GitHub release with release notes
+- Generates comprehensive release notes including:
+  - Full changelog from CHANGELOG.md
+  - Detailed usage instructions
+  - Troubleshooting guide for common errors
+- Creates a draft GitHub release with release notes
 - Uploads VSIX file as release asset
 - Stores build artifacts
 
@@ -43,7 +46,6 @@ This directory contains GitHub Actions workflows for the DisTrack VS Code Extens
 - Checks code formatting with Prettier
 - Runs ESLint
 - Performs TypeScript type checking
-- Runs tests
 - Builds the extension
 - Comments on PR with status
 
@@ -52,7 +54,6 @@ This directory contains GitHub Actions workflows for the DisTrack VS Code Extens
 **Purpose:** Monitors dependencies for security updates
 
 - Checks for outdated dependencies
-- Runs security audits
 - Creates issues for high/critical security vulnerabilities
 - Helps maintain security posture
 
@@ -60,15 +61,19 @@ This directory contains GitHub Actions workflows for the DisTrack VS Code Extens
 
 To use these workflows, you'll need to set up the following secrets in your GitHub repository:
 
+### `TOKEN` (Required for releases)
+- **Purpose:** GitHub Personal Access Token for creating releases
+- **How to get:** 
+  1. Go to GitHub Settings > Developer settings > Personal access tokens
+  2. Create a token with `repo` permissions
+  3. Add it to your repository secrets as `TOKEN`
+
 ### `VSCE_PAT` (Required for publishing)
 - **Purpose:** Personal Access Token for VS Code Marketplace
 - **How to get:** 
   1. Go to https://dev.azure.com
   2. Create a Personal Access Token with Marketplace (Publish) permissions
   3. Add it to your repository secrets
-
-### Optional Secrets
-- `DISCORD_WEBHOOK_URL`: Discord webhook URL for notifications (if you want Discord integration)
 
 ## Usage
 
@@ -78,13 +83,24 @@ To use these workflows, you'll need to set up the following secrets in your GitH
 3. Create and push a tag: `git tag v1.0.0 && git push origin v1.0.0`
 4. The release workflow will automatically:
    - Build the extension
-   - Create a GitHub release
+   - Create a draft GitHub release with comprehensive notes
    - Package the VSIX file
+   - Include detailed usage instructions and troubleshooting guide
    - Publish to VS Code Marketplace (if VSCE_PAT is configured)
 
 ### Manual Workflow Dispatch
 - The Dependency Update workflow can be run manually from the Actions tab
 - Useful for checking dependencies outside the weekly schedule
+
+## Release Notes Features
+
+The release workflow now generates comprehensive release notes that include:
+
+- **Full Changelog**: Links to the complete CHANGELOG.md
+- **Patch Notes**: Extracted from CHANGELOG.md for the specific version
+- **Usage Instructions**: Step-by-step guide for setting up and using the extension
+- **Troubleshooting**: Common error messages and their solutions
+- **Installation Guide**: Complete process from unzipping to running the extension
 
 ## Workflow Dependencies
 
@@ -95,7 +111,7 @@ Release ← Publish
 
 The workflows are designed to work together:
 - CI runs on every push and PR
-- Release creates releases when tags are pushed
+- Release creates draft releases when tags are pushed
 - Publish automatically publishes to marketplace when releases are created
 - PR Check provides feedback on pull requests
 - Dependency Update monitors security
@@ -105,7 +121,7 @@ The workflows are designed to work together:
 ### Common Issues
 1. **Build fails**: Check Node.js version compatibility
 2. **Publish fails**: Verify VSCE_PAT secret is correctly set
-3. **Tests fail**: Ensure all tests pass locally before pushing
+3. **Release fails**: Verify TOKEN secret is correctly set
 4. **Linting fails**: Run `npm run lint` locally to fix issues
 
 ### Local Testing
@@ -114,6 +130,5 @@ Before pushing, run these commands locally:
 npm ci
 npm run lint
 npm run compile
-npm run test
 npm run package
 ``` 
