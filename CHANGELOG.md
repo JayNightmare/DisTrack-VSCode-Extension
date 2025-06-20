@@ -5,6 +5,17 @@ All notable changes to the "DisTrack" extension will be documented in this file.
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 ## Patch Notes
+# v0.7.1-beta
+* Added comprehensive GitHub workflows for CI/CD automation
+* Implemented automated release management with detailed release notes
+* Added VS Code Marketplace publishing automation
+* Enhanced pull request quality checks and feedback
+* Added dependency security monitoring
+* Improved release notes generation with usage instructions and troubleshooting
+* Added automated VSIX packaging and artifact management
+* Implemented draft release creation for better release management
+* Added comprehensive documentation for GitHub workflows
+
 # v0.6.9
 * Fixed Auth bot token issue
 * Added Profile tab
