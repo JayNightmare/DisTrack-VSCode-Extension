@@ -89,12 +89,28 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
         const username = discordId ? await getDiscordUsername(discordId) : '';
         const streakData = discordId ? await getStreakData(discordId) : { currentStreak: 0, longestStreak: 0 };
         const languageDurations = discordId ? await getLanguageDurations(discordId) : {};
-        const userIndex = leaderboard.findIndex(user => user.id === discordId) + 2;
-        const userRank = userIndex >= 0 ? userIndex : 'N/A';
+
+        // Previous ranks stored in global state
+        const previousRanks = this._context.globalState.get<Record<string, number>>("previousRank") || {};
+
+        // Current ranks map
+        const currentRanks: Record<string, number> = {};
+        leaderboard.forEach((user, idx) => {
+            currentRanks[user.userId] = idx + 1;
+        });
+
+        const userRank = discordId && currentRanks[discordId] ? currentRanks[discordId] : 'N/A';
         const userMedal = (typeof userRank === 'number' && userRank <= 3) ? this.getMedalIcon(userRank) : '';
+        const rankDelta = (typeof userRank === 'number' && previousRanks[discordId || ''] !== undefined)
+            ? previousRanks[discordId || ''] - userRank
+            : 0;
 
 
         // Update profile content
+        const deltaHtmlProfile = (typeof userRank === 'number' && userRank > 10)
+            ? this.getDeltaElement(rankDelta)
+            : '';
+
         const profileContent = isConnected ? `
             <div class="profile-section">
                 <div class="profile-item">
@@ -119,7 +135,7 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
                 </div>
                 <br>
                 <div class="profile-item">
-                    <strong>Leaderboard Ranking:</strong> ${userRank !== 'N/A' ? `${userRank} ${userMedal}` : 'N/A'}
+                    <strong>Leaderboard Ranking:</strong> ${userRank !== 'N/A' ? `${userRank} ${userMedal} ${deltaHtmlProfile}` : 'N/A'}
                 </div>
             </div>
         ` : '<p>Connect to Discord to view your profile</p>';
@@ -129,19 +145,26 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
         const currentUserId = discordId;
         if (isConnected && leaderboard.length > 0) {
             // Find current user in leaderboard using 'id'
-            const currentUserIndex = leaderboard.findIndex(user => user.userId === currentUserId) + 1;
-            
+            const currentUserIndex = leaderboard.findIndex(user => user.userId === currentUserId);
+            const currentUserRank = currentUserIndex >= 0 ? currentUserIndex + 1 : -1;
+
             // Get top 10 users
             const top10 = leaderboard.slice(0, 10);
-            
+
             // Generate top 10 entries
             leaderboardContent = top10
-                .map((user, index) => `
+                .map((user, index) => {
+                    const rank = index + 1;
+                    const delta = previousRanks[user.userId] !== undefined ? previousRanks[user.userId] - rank : 0;
+                    const deltaHtml = this.getDeltaElement(delta);
+                    return `
                     <div class="user-row ${user.userId === currentUserId ? 'current-user' : ''}">
-                        ${this.getMedalIcon(index + 1)}
+                        ${this.getMedalIcon(rank)}
                         <span>${user.username} - ${this.formatTime(user.totalCodingTime)}</span>
+                        ${deltaHtml}
                     </div>
-                `)
+                    `;
+                })
                 .join('');
             
             // Add ellipsis if there are more than 10 users
@@ -150,12 +173,15 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
                     <div class="ellipsis">...</div>
                 `;
             }
-            
+
             // Add current user at bottom if not in top 10
-            if (currentUserIndex > 10) {
+            if (currentUserRank > 10 && currentUserIndex >= 0) {
+                const delta = previousRanks[currentUserId || ''] !== undefined ? previousRanks[currentUserId || ''] - currentUserRank : 0;
+                const deltaHtml = this.getDeltaElement(delta);
                 leaderboardContent += `
                     <div class="user-row current-user">
-                        <span>${currentUserIndex + 1}. ${leaderboard[currentUserIndex].username} - ${this.formatTime(leaderboard[currentUserIndex].totalCodingTime)}</span>
+                        <span>${currentUserRank}. ${leaderboard[currentUserIndex].username} - ${this.formatTime(leaderboard[currentUserIndex].totalCodingTime)}</span>
+                        ${deltaHtml}
                     </div>
                 `;
             }
@@ -182,6 +208,7 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
             .replace('<!-- Profile content will be inserted here -->', profileContent)
             .replace('<!-- Leaderboard items will be inserted here -->', leaderboardContent)
             .replace('const sessionStart = null; // Will be set from the extension', timerScript);
+        await this._context.globalState.update('previousRank', currentRanks);
 
         return html;
     }
@@ -191,6 +218,15 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
         if (position === 2) return "🥈";
         if (position === 3) return "🥉";
         return `${position}.`;
+    }
+
+    private getDeltaElement(delta: number) {
+        if (delta > 0) {
+            return `<span class="rank-delta up">▲${delta}</span>`;
+        } else if (delta < 0) {
+            return `<span class="rank-delta down">▼${Math.abs(delta)}</span>`;
+        }
+        return `<span class="rank-delta same">—</span>`;
     }
 
     private formatTime(seconds: number) {
