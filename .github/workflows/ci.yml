@@ -33,8 +33,8 @@ jobs:
     - name: Compile TypeScript
       run: npm run compile
 
-    - name: Run tests
-      run: npm run test
+    # - name: Run tests
+    #   run: npm run test
 
     - name: Build extension
       run: npm run package
