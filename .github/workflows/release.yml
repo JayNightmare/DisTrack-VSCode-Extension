@@ -44,10 +44,10 @@ jobs:
           *.vsix
           dist/
         generate_release_notes: true
-        draft: false
-        prerelease: false
+        draft: true
+        prerelease: true
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
 
     - name: Upload VSIX artifact
       uses: actions/upload-artifact@v4
