@@ -5,6 +5,9 @@ All notable changes to the "DisTrack" extension will be documented in this file.
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 ## Patch Notes
+# v0.7.11
+* Updated the VSCode Engine Versionand VCSE Type to 1.96.2 so it can run on other VSCode IDE versions
+
 # v0.7.1-beta
 * Added comprehensive GitHub workflows for CI/CD automation
 * Implemented automated release management with detailed release notes

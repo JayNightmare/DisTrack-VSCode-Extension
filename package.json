@@ -1,123 +1,146 @@
 {
-  "name": "dis-track",
-  "displayName": "Dis.Track | Discord VSCode Tracker",
-  "description": "This will track your time in VSCode. Add the bot to your server to check your progress!",
-  "version": "0.7.1",
-  "publisher": "JayNightmare",
-  "author": {
-    "name": "Jay",
-    "email": "jn3.enquiries@gmail.com"
-  },
-  "engines": {
-    "vscode": "^1.97.0"
-  },
-  "icon": "images/distrack.png",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/JayNightmare/DisTrack-VSCode-Extension"
-  },
-  "categories": [
-    "Other"
-  ],
-  "bugs": {
-    "url": "https://github.com/JayNightmare/DisTrack-VSCode-Extension/issues"
-  },
-  "keywords": [
-    "discord",
-    "vscode",
-    "rich",
-    "presence",
-    "rich presence",
-    "rpc",
-    "time tracking",
-    "development",
-    "tracker",
-    "leaderboard",
-    "discord leaderboard"
-  ],
-  "homepage": "https://github.com/JayNightmare/DisTrack-VSCode-Extension#readme",
-  "activationEvents": [
-    "*"
-  ],
-  "main": "./dist/extension.js",
-  "contributes": {
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "discordCodingContainer",
-          "title": "Dis.Track",
-          "icon": "images/D.png"
-        }
-      ]
+    "name": "dis-track",
+    "displayName": "Dis.Track | Discord VSCode Tracker",
+    "description": "This will track your time in VSCode. Add the bot to your server to check your progress!",
+    "version": "0.7.11",
+    "publisher": "JayNightmare",
+    "author": {
+        "name": "Jay",
+        "email": "jn3.enquiries@gmail.com"
     },
-    "views": {
-      "discordCodingContainer": [
-        {
-          "id": "discordCodingPanel",
-          "name": "Leaderboard",
-          "type": "webview"
-        }
-      ]
+    "engines": {
+        "vscode": "^1.96.2"
     },
-    "commands": [],
-    "configuration": {
-      "title": "Dis.Track Settings",
-      "properties": {
-        "extension.updateDiscordId": {
-          "type": "string",
-          "default": "",
-          "description": "Enter your Discord User ID to link it with the extension."
+    "icon": "images/distrack.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/JayNightmare/DisTrack-VSCode-Extension"
+    },
+    "categories": [
+        "Other"
+    ],
+    "bugs": {
+        "url": "https://github.com/JayNightmare/DisTrack-VSCode-Extension/issues"
+    },
+    "keywords": [
+        "discord",
+        "vscode",
+        "rich",
+        "presence",
+        "rich presence",
+        "rpc",
+        "time tracking",
+        "development",
+        "tracker",
+        "leaderboard",
+        "discord leaderboard"
+    ],
+    "homepage": "https://github.com/JayNightmare/DisTrack-VSCode-Extension#readme",
+    "activationEvents": [
+        "onStartupFinished",
+        "onCommand:extension.updateDiscordId",
+        "onView:discordCodingPanel"
+    ],
+    "main": "./dist/extension.js",
+    "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "discordCodingContainer",
+                    "title": "Dis.Track",
+                    "icon": "images/D.png"
+                }
+            ]
         },
-        "extension.enableRichPresence": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable or disable Rich Presence integration."
+        "views": {
+            "discordCodingContainer": [
+                {
+                    "id": "discordCodingPanel",
+                    "name": "Leaderboard",
+                    "type": "webview"
+                }
+            ]
         },
-        "extension.sessionTimerFormat": {
-          "type": "string",
-          "enum": [
-            "hh:mm:ss",
-            "mm:ss",
-            "hours"
-          ],
-          "default": "hh:mm:ss",
-          "description": "Choose the format for the session timer display."
+        "commands": [
+            {
+                "command": "extension.updateDiscordId",
+                "title": "Link Discord Account",
+                "category": "DisTrack"
+            },
+            {
+                "command": "extension.reconnectDiscord",
+                "title": "Reconnect Discord",
+                "category": "DisTrack"
+            },
+            {
+                "command": "extension.refreshRPC",
+                "title": "Refresh Discord RPC",
+                "category": "DisTrack"
+            },
+            {
+                "command": "extension.refreshPanel",
+                "title": "Refresh Leaderboard",
+                "category": "DisTrack"
+            }
+        ],
+        "configuration": {
+            "title": "Dis.Track Settings",
+            "properties": {
+                "extension.updateDiscordId": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Enter your Discord User ID to link it with the extension."
+                },
+                "extension.enableRichPresence": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable or disable Rich Presence integration."
+                },
+                "extension.sessionTimerFormat": {
+                    "type": "string",
+                    "enum": [
+                        "hh:mm:ss",
+                        "mm:ss",
+                        "hours"
+                    ],
+                    "default": "hh:mm:ss",
+                    "description": "Choose the format for the session timer display."
+                }
+            }
         }
-      }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run package",
+        "compile": "webpack",
+        "watch": "webpack --watch",
+        "package": "webpack --mode production --devtool hidden-source-map",
+        "compile-tests": "tsc -p . --outDir out",
+        "watch-tests": "tsc -p . -w --outDir out",
+        "pretest": "npm run compile-tests && npm run compile && npm run lint",
+        "lint": "eslint src",
+        "test": "vscode-test"
+    },
+    "devDependencies": {
+        "@types/discord-rpc": "^4.0.8",
+        "@types/mocha": "^10.0.10",
+        "@types/node": "^22.13.4",
+        "@types/vscode": "^1.96.2",
+        "@typescript-eslint/eslint-plugin": "^8.24.0",
+        "@typescript-eslint/parser": "^8.24.0",
+        "@vscode/test-cli": "^0.0.10",
+        "@vscode/test-electron": "^2.4.1",
+        "dotenv-webpack": "^8.1.0",
+        "eslint": "^9.20.0",
+        "ts-loader": "^9.5.1",
+        "typescript": "^5.7.3",
+        "webpack": "^5.98.0",
+        "webpack-cli": "^6.0.1"
+    },
+    "dependencies": {
+        "axios": "^1.7.9",
+        "discord-rpc": "^4.0.1",
+        "dotenv": "^16.4.7",
+        "moment": "^2.30.1",
+        "vsce": "^2.15.0"
     }
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run package",
-    "compile": "webpack",
-    "watch": "webpack --watch",
-    "package": "webpack --mode production --devtool hidden-source-map",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "lint": "eslint src",
-    "test": "vscode-test"
-  },
-  "devDependencies": {
-    "@types/discord-rpc": "^4.0.8",
-    "@types/mocha": "^10.0.10",
-    "@types/node": "^22.13.4",
-    "@types/vscode": "^1.97.0",
-    "@typescript-eslint/eslint-plugin": "^8.24.0",
-    "@typescript-eslint/parser": "^8.24.0",
-    "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1",
-    "dotenv-webpack": "^8.1.0",
-    "eslint": "^9.20.0",
-    "ts-loader": "^9.5.1",
-    "typescript": "^5.7.3",
-    "webpack": "^5.98.0",
-    "webpack-cli": "^6.0.1"
-  },
-  "dependencies": {
-    "axios": "^1.7.9",
-    "discord-rpc": "^4.0.1",
-    "dotenv": "^16.4.7",
-    "moment": "^2.30.1",
-    "vsce": "^2.15.0"
-  }
 }
