@@ -10,19 +10,12 @@
 
 This Visual Studio Code extension helps you track and analyze your coding sessions by integrating with Discord and logging coding activity to a MongoDB database. It displays your active coding time, language usage, and various achievements through a dedicated Discord bot. 
 
-> **Bot Invite:** https://discord.com/oauth2/authorize?client_id=1305258645906526328
->
-> **Bot Version:** beta@v0.7.9
-> - [Source Code](https://github.com/JayNightmare/DisTrack-Discord-Bot)
-----
-> **Extension:**
-> - [Source Code](https://github.com/JayNightmare/DisTrack-VSCode-Extension)
-> - [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=JayNightmare.dis-track)
-> - [Patch Notes](https://github.com/JayNightmare/DisTrack-VSCode-Extension/blob/master/CHANGELOG.md)
->
-> **Extension Version:** beta@v0.7.1
-----
-> **Website:** https://distrack-website.vercel.app
+| Name | Description | Version | Links
+| --- | --- | --- | --- |
+| VSCode Extension | Discord VSCode Leaderboard Tracker Extension | beta@v0.7.2 | [GitHub](https://github.com/JayNightmare/DisTrack-VSCode-Extension), [Marketplace](https://marketplace.visualstudio.com/items?itemName=JayNightmare.dis-track) |
+| Discord Bot | Discord Bot for tracking coding activity | beta@v0.7.9 | [GitHub](https://github.com/JayNightmare/DisTrack-Discord-Bot), [Invite](https://discord.com/oauth2/authorize?client_id=1305258645906526328) |
+| Website | Website for DisTrack | v0.1.3 | [GitHub](https://github.com/JayNightmare/DisTrack-Website), [Website](https://distrack.endpoint-system.uk/) |
+| Discord Manager | Discord bot which manages the Discord server | v0.0.4 | [GitHub](https://github.com/JayNightmare/DisTrack-Discord-Bot-Management)
 
 ## Table of Contents
 - [Table of Contents](#table-of-contents)
