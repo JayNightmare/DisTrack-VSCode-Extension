@@ -81,6 +81,11 @@
                 "command": "extension.refreshPanel",
                 "title": "Refresh Leaderboard",
                 "category": "DisTrack"
+            },
+            {
+                "command": "extension.clearTokens",
+                "title": "Clear Stored Tokens",
+                "category": "DisTrack"
             }
         ],
         "configuration": {
@@ -105,6 +110,13 @@
                     ],
                     "default": "hh:mm:ss",
                     "description": "Choose the format for the session timer display."
+                },
+                "extension.languageDetectionDelay": {
+                    "type": "number",
+                    "default": 500,
+                    "minimum": 100,
+                    "maximum": 5000,
+                    "description": "Delay in milliseconds before detecting language changes (prevents excessive updates)."
                 }
             }
         }

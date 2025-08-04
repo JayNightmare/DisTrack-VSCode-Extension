@@ -50,8 +50,11 @@ body {
 }
 
 .user-row {
+    color: white;
+    width: 100%;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     margin: 10px 0;
     padding: 10px;
     background: linear-gradient(#131313, #131313) padding-box, linear-gradient(145deg, #131313, #4A81E6) border-box;
