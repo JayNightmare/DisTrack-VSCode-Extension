@@ -254,3 +254,44 @@ export async function getLanguageDurations(userId: string) {
         return {};
     }
 }
+
+// New function to link account with 6-digit code
+export async function linkAccountWithCode(
+    code: string
+): Promise<{ success: boolean; userId?: string; error?: string }> {
+    try {
+        const response = await axios.post(
+            `${endpointUrl}/extension/link`,
+            { code },
+            {
+                headers: { Authorization: `${apiToken}` },
+            }
+        );
+
+        if (response.status === 200 && response.data.userId) {
+            console.log("<< Account linked successfully with code >>");
+            return { success: true, userId: response.data.userId };
+        } else {
+            console.log("<< Invalid or expired code >>");
+            return { success: false, error: "Invalid or expired code" };
+        }
+    } catch (error: any) {
+        const status = error.response?.status;
+        let errorMessage = "Failed to link account";
+
+        if (status === 400) {
+            errorMessage = "Invalid code format";
+        } else if (status === 404) {
+            errorMessage = "Code not found or expired";
+        } else if (status === 409) {
+            errorMessage = "Code already used";
+        } else {
+            console.error(
+                "<< Error linking account with code:",
+                error.response?.data || error.message
+            );
+        }
+
+        return { success: false, error: errorMessage };
+    }
+}

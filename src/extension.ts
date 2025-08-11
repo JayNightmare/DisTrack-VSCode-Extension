@@ -6,6 +6,7 @@ import {
     checkAndValidateUserId,
     getDiscordUsername,
     getStreakData,
+    linkAccountWithCode,
 } from "./utils/api";
 import { SessionManager } from "./utils/sessionManager";
 import { ConfigManager } from "./utils/configManager";
@@ -153,64 +154,102 @@ export async function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // Command to update/link Discord ID
+    // Command to update/link Discord ID via website
     context.subscriptions.push(
         vscode.commands.registerCommand(
             "extension.updateDiscordId",
             async () => {
-                const currentDiscordId = getValidDiscordId(context);
-                const enteredDiscordId = await vscode.window.showInputBox({
-                    prompt: "Enter your Discord User ID",
-                    placeHolder: "e.g., 123456789012345678",
-                    value: currentDiscordId ?? "",
-                    validateInput: (value) => {
-                        if (value && !/^\d{15,32}$/.test(value)) {
-                            return "Discord ID must be 15-32 digits long";
-                        }
-                        return null;
-                    },
-                });
+                console.log(
+                    "<< Starting website-based Discord linking process >>"
+                );
 
-                if (enteredDiscordId && /^\d{15,32}$/.test(enteredDiscordId)) {
-                    try {
-                        const isValid = await checkAndValidateUserId(
-                            enteredDiscordId
-                        );
-                        if (isValid) {
-                            await context.globalState.update(
-                                "discordId",
-                                enteredDiscordId
+                // Step 1: Open the DisTrack website for account linking
+                const websiteUrl =
+                    "https://distrack.endpoint-system.uk/link-account";
+
+                try {
+                    await vscode.env.openExternal(vscode.Uri.parse(websiteUrl));
+                    console.log(`<< Opened website: ${websiteUrl} >>`);
+
+                    // Show information message about the process
+                    vscode.window.showInformationMessage(
+                        "Please link your Discord account on the website, then return here to enter your 6-digit code."
+                    );
+
+                    // Step 2: Prompt for 6-digit code after a short delay
+                    setTimeout(async () => {
+                        const linkCode = await vscode.window.showInputBox({
+                            prompt: "Enter the 6-digit code from the DisTrack website",
+                            placeHolder: "e.g., 123456",
+                            validateInput: (value) => {
+                                if (value && !/^\d{6}$/.test(value)) {
+                                    return "Code must be exactly 6 digits";
+                                }
+                                return null;
+                            },
+                        });
+
+                        if (linkCode && /^\d{6}$/.test(linkCode)) {
+                            console.log(
+                                "<< Attempting to link account with code >>"
                             );
-                            discordId = enteredDiscordId;
-                            updateStatusBar(statusBar, discordId);
 
-                            if (!sessionManager.isSessionActive()) {
-                                sessionManager.startSession();
+                            try {
+                                const result = await linkAccountWithCode(
+                                    linkCode
+                                );
+
+                                if (result.success && result.userId) {
+                                    // Store the Discord ID received from the API
+                                    await context.globalState.update(
+                                        "discordId",
+                                        result.userId
+                                    );
+                                    discordId = result.userId;
+                                    updateStatusBar(statusBar, discordId);
+
+                                    // Start session if not already active
+                                    if (!sessionManager.isSessionActive()) {
+                                        sessionManager.startSession();
+                                    }
+
+                                    console.log(
+                                        `<< Account linked successfully! Discord ID: ${result.userId} >>`
+                                    );
+                                    vscode.window.showInformationMessage(
+                                        "Discord account linked successfully!"
+                                    );
+                                    discordCodingViewProvider.updateWebviewContent(
+                                        "success"
+                                    );
+                                } else {
+                                    console.log(
+                                        `<< Account linking failed: ${result.error} >>`
+                                    );
+                                    vscode.window.showErrorMessage(
+                                        result.error ||
+                                            "Failed to link account. Please try again."
+                                    );
+                                }
+                            } catch (error) {
+                                console.error(
+                                    "<< Error during account linking >>",
+                                    error
+                                );
+                                vscode.window.showErrorMessage(
+                                    "An error occurred while linking your account. Please try again."
+                                );
                             }
-
-                            vscode.window.showInformationMessage(
-                                "Discord ID linked successfully!"
-                            );
-                            discordCodingViewProvider.updateWebviewContent(
-                                "success"
-                            );
-                        } else {
+                        } else if (linkCode) {
                             vscode.window.showErrorMessage(
-                                "Failed to validate Discord ID. Please check the ID and try again."
+                                "Invalid code format. Please enter a 6-digit code."
                             );
                         }
-                    } catch (error) {
-                        console.error(
-                            "<< Error validating Discord ID >>",
-                            error
-                        );
-                        vscode.window.showErrorMessage(
-                            "An error occurred while validating Discord ID."
-                        );
-                    }
-                } else if (enteredDiscordId) {
+                    }, 2000); // 2 second delay to allow user to see the information message
+                } catch (error) {
+                    console.error("<< Error opening website >>", error);
                     vscode.window.showErrorMessage(
-                        "Invalid Discord ID format. Please enter a valid Discord User ID."
+                        "Failed to open the DisTrack website. Please visit https://distrack.endpoint-system.uk/link-account manually."
                     );
                 }
             }
@@ -268,7 +307,8 @@ function updateStatusBar(
 ) {
     statusBar.text = discordId ? "Connected to Discord" : "Link to Discord";
     statusBar.command = "extension.updateDiscordId";
-    statusBar.tooltip = "Click to update your Discord User ID";
+    statusBar.tooltip =
+        "Click to link your Discord account via DisTrack website";
     statusBar.show();
 }
 
