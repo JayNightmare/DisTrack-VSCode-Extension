@@ -257,12 +257,14 @@ export async function getLanguageDurations(userId: string) {
 
 // New function to link account with 6-digit code
 export async function linkAccountWithCode(
-    code: string
+    linkCode: string
 ): Promise<{ success: boolean; userId?: string; error?: string }> {
     try {
+        console.log(`<< Linking account with code ${linkCode} >>`);
+
         const response = await axios.post(
             `${endpointUrl}/extension/link`,
-            { code },
+            { linkCode },
             {
                 headers: { Authorization: `${apiToken}` },
             }
@@ -280,7 +282,7 @@ export async function linkAccountWithCode(
         let errorMessage = "Failed to link account";
 
         if (status === 400) {
-            errorMessage = "Invalid code format";
+            errorMessage = `Invalid code format ${linkCode}`;
         } else if (status === 404) {
             errorMessage = "Code not found or expired";
         } else if (status === 409) {

@@ -81,11 +81,6 @@
                 "command": "extension.refreshPanel",
                 "title": "Refresh Leaderboard",
                 "category": "DisTrack"
-            },
-            {
-                "command": "extension.clearTokens",
-                "title": "Clear Stored Tokens",
-                "category": "DisTrack"
             }
         ],
         "configuration": {

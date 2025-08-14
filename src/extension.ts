@@ -173,79 +173,77 @@ export async function activate(context: vscode.ExtensionContext) {
 
                     // Show information message about the process
                     vscode.window.showInformationMessage(
-                        "Please link your Discord account on the website, then return here to enter your 6-digit code."
+                        "Please link your Discord account on the website, then return here to enter your 6-alphanumeric code."
                     );
 
-                    // Step 2: Prompt for 6-digit code after a short delay
-                    setTimeout(async () => {
-                        const linkCode = await vscode.window.showInputBox({
-                            prompt: "Enter the 6-digit code from the DisTrack website",
-                            placeHolder: "e.g., 123456",
-                            validateInput: (value) => {
-                                if (value && !/^\d{6}$/.test(value)) {
-                                    return "Code must be exactly 6 digits";
-                                }
-                                return null;
-                            },
-                        });
+                    // Step 2: Prompt for 6-alphanumeric code after a short delay
+                    const linkCode = await vscode.window.showInputBox({
+                        prompt: "Enter the 6-alphanumeric code from the DisTrack website",
+                        placeHolder: "e.g., 1A2B3C",
+                        validateInput: (value) => {
+                            if (value && !/^[A-Z0-9]{6}$/.test(value)) {
+                                return "Code must be exactly 6 alphanumeric characters";
+                            }
+                            return null;
+                        },
+                    });
 
-                        if (linkCode && /^\d{6}$/.test(linkCode)) {
-                            console.log(
-                                "<< Attempting to link account with code >>"
-                            );
+                    console.log(`<< User entered link code: ${linkCode} >>`);
 
-                            try {
-                                const result = await linkAccountWithCode(
-                                    linkCode
+                    if (linkCode && /^[A-Z0-9]{6}$/.test(linkCode)) {
+                        console.log(
+                            `<< Attempting to link account with code ${linkCode} >>`
+                        );
+
+                        try {
+                            const result = await linkAccountWithCode(linkCode);
+
+                            if (result.success && result.userId) {
+                                // Store the Discord ID received from the API
+                                await context.globalState.update(
+                                    "discordId",
+                                    result.userId
                                 );
+                                discordId = result.userId;
+                                updateStatusBar(statusBar, discordId);
 
-                                if (result.success && result.userId) {
-                                    // Store the Discord ID received from the API
-                                    await context.globalState.update(
-                                        "discordId",
-                                        result.userId
-                                    );
-                                    discordId = result.userId;
-                                    updateStatusBar(statusBar, discordId);
-
-                                    // Start session if not already active
-                                    if (!sessionManager.isSessionActive()) {
-                                        sessionManager.startSession();
-                                    }
-
-                                    console.log(
-                                        `<< Account linked successfully! Discord ID: ${result.userId} >>`
-                                    );
-                                    vscode.window.showInformationMessage(
-                                        "Discord account linked successfully!"
-                                    );
-                                    discordCodingViewProvider.updateWebviewContent(
-                                        "success"
-                                    );
-                                } else {
-                                    console.log(
-                                        `<< Account linking failed: ${result.error} >>`
-                                    );
-                                    vscode.window.showErrorMessage(
-                                        result.error ||
-                                            "Failed to link account. Please try again."
-                                    );
+                                // Start session if not already active
+                                if (!sessionManager.isSessionActive()) {
+                                    sessionManager.startSession();
                                 }
-                            } catch (error) {
-                                console.error(
-                                    "<< Error during account linking >>",
-                                    error
+
+                                console.log(
+                                    `<< Account linked successfully! Discord ID: ${result.userId} >>`
+                                );
+                                vscode.window.showInformationMessage(
+                                    "Discord account linked successfully!"
+                                );
+                                discordCodingViewProvider.updateWebviewContent(
+                                    "success"
+                                );
+                            } else {
+                                console.log(
+                                    `<< Account linking failed: ${result.error} >>`
                                 );
                                 vscode.window.showErrorMessage(
-                                    "An error occurred while linking your account. Please try again."
+                                    result.error ||
+                                        "Failed to link account. Please try again."
                                 );
                             }
-                        } else if (linkCode) {
+                        } catch (error) {
+                            console.error(
+                                "<< Error during account linking >>",
+                                error
+                            );
                             vscode.window.showErrorMessage(
-                                "Invalid code format. Please enter a 6-digit code."
+                                "An error occurred while linking your account. Please try again."
                             );
                         }
-                    }, 2000); // 2 second delay to allow user to see the information message
+                    } else if (linkCode) {
+                        vscode.window.showErrorMessage(
+                            "Invalid code format. Please enter a 6-alphanumeric code."
+                        );
+                    }
                 } catch (error) {
                     console.error("<< Error opening website >>", error);
                     vscode.window.showErrorMessage(
@@ -254,25 +252,6 @@ export async function activate(context: vscode.ExtensionContext) {
                 }
             }
         )
-    );
-
-    // Command to clear stored tokens (for troubleshooting)
-    context.subscriptions.push(
-        vscode.commands.registerCommand("extension.clearTokens", async () => {
-            const confirm = await vscode.window.showWarningMessage(
-                "This will clear all stored Discord and API tokens. You'll need to re-enter them. Continue?",
-                "Yes",
-                "No"
-            );
-
-            if (confirm === "Yes") {
-                await context.secrets.delete("discord-bot-token");
-                await context.secrets.delete("api-token");
-                vscode.window.showInformationMessage(
-                    "All tokens cleared successfully."
-                );
-            }
-        })
     );
 
     // Update configuration based on changes
