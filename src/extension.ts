@@ -177,73 +177,85 @@ export async function activate(context: vscode.ExtensionContext) {
                     );
 
                     // Step 2: Prompt for 6-alphanumeric code after a short delay
-                    const linkCode = await vscode.window.showInputBox({
-                        prompt: "Enter the 6-alphanumeric code from the DisTrack website",
-                        placeHolder: "e.g., 1A2B3C",
-                        validateInput: (value) => {
-                            if (value && !/^[A-Z0-9]{6}$/.test(value)) {
-                                return "Code must be exactly 6 alphanumeric characters";
-                            }
-                            return null;
-                        },
-                    });
+                    setTimeout(async () => {
+                        const linkCode = await vscode.window.showInputBox({
+                            prompt: "Enter the 6-alphanumeric code from the DisTrack website",
+                            placeHolder: "e.g., 1A2B3C",
+                            validateInput: (value) => {
+                                if (value && !/^[A-Z0-9]{6}$/.test(value)) {
+                                    return "Code must be exactly 6 alphanumeric characters";
+                                }
+                                return null;
+                            },
+                        });
 
-                    console.log(`<< User entered link code: ${linkCode} >>`);
-
-                    if (linkCode && /^[A-Z0-9]{6}$/.test(linkCode)) {
                         console.log(
-                            `<< Attempting to link account with code ${linkCode} >>`
+                            `<< User entered link code: ${linkCode} >>`
                         );
 
-                        try {
-                            const result = await linkAccountWithCode(linkCode);
+                        if (linkCode && /^[A-Z0-9]{6}$/.test(linkCode)) {
+                            console.log(
+                                `<< Attempting to link account with code ${linkCode} >>`
+                            );
 
-                            if (result.success && result.userId) {
-                                // Store the Discord ID received from the API
-                                await context.globalState.update(
-                                    "discordId",
-                                    result.userId
+                            try {
+                                const result = await linkAccountWithCode(
+                                    linkCode
                                 );
-                                discordId = result.userId;
-                                updateStatusBar(statusBar, discordId);
 
-                                // Start session if not already active
-                                if (!sessionManager.isSessionActive()) {
-                                    sessionManager.startSession();
+                                console.log(
+                                    `<< Link account response: ${JSON.stringify(
+                                        result
+                                    )} >>`
+                                );
+
+                                if (result.success && result.userId) {
+                                    // Store the Discord ID received from the API
+                                    await context.globalState.update(
+                                        "discordId",
+                                        result.userId
+                                    );
+                                    discordId = result.userId;
+                                    updateStatusBar(statusBar, discordId);
+
+                                    // Start session if not already active
+                                    if (!sessionManager.isSessionActive()) {
+                                        sessionManager.startSession();
+                                    }
+
+                                    console.log(
+                                        `<< Account linked successfully! Discord ID: ${result.userId} >>`
+                                    );
+                                    vscode.window.showInformationMessage(
+                                        "Discord account linked successfully!"
+                                    );
+                                    discordCodingViewProvider.updateWebviewContent(
+                                        "success"
+                                    );
+                                } else {
+                                    console.log(
+                                        `<< Account linking failed: ${result.error} >>`
+                                    );
+                                    vscode.window.showErrorMessage(
+                                        result.error ||
+                                            "Failed to link account. Please try again."
+                                    );
                                 }
-
-                                console.log(
-                                    `<< Account linked successfully! Discord ID: ${result.userId} >>`
-                                );
-                                vscode.window.showInformationMessage(
-                                    "Discord account linked successfully!"
-                                );
-                                discordCodingViewProvider.updateWebviewContent(
-                                    "success"
-                                );
-                            } else {
-                                console.log(
-                                    `<< Account linking failed: ${result.error} >>`
+                            } catch (error) {
+                                console.error(
+                                    "<< Error during account linking >>",
+                                    error
                                 );
                                 vscode.window.showErrorMessage(
-                                    result.error ||
-                                        "Failed to link account. Please try again."
+                                    "An error occurred while linking your account. Please try again."
                                 );
                             }
-                        } catch (error) {
-                            console.error(
-                                "<< Error during account linking >>",
-                                error
-                            );
+                        } else if (linkCode) {
                             vscode.window.showErrorMessage(
-                                "An error occurred while linking your account. Please try again."
+                                "Invalid code format. Please enter a 6-alphanumeric code."
                             );
                         }
-                    } else if (linkCode) {
-                        vscode.window.showErrorMessage(
-                            "Invalid code format. Please enter a 6-alphanumeric code."
-                        );
-                    }
+                    }, 1000);
                 } catch (error) {
                     console.error("<< Error opening website >>", error);
                     vscode.window.showErrorMessage(

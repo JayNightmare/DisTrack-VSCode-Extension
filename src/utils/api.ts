@@ -175,8 +175,12 @@ export async function getDiscordUsername(
             }
         );
 
+        console.log(
+            `<< Fetched Discord user data: ${JSON.stringify(response.data)} >>`
+        );
+
         if (response.status === 200) {
-            const username = response.data.username; // Assuming the API returns `username` in the response
+            const username = response.data.username;
             console.log(`<< Fetched Discord username: ${username} >>`);
             return username;
         }
@@ -270,12 +274,18 @@ export async function linkAccountWithCode(
             }
         );
 
-        if (response.status === 200 && response.data.userId) {
+        if (response.status === 200 && response.data.user.userId) {
             console.log("<< Account linked successfully with code >>");
-            return { success: true, userId: response.data.userId };
+            return { success: true, userId: response.data.user.userId };
         } else {
-            console.log("<< Invalid or expired code >>");
-            return { success: false, error: "Invalid or expired code" };
+            console.log(`<< Invalid or expired code ${response.data.error} >>`);
+            console.log(
+                `<< Response data: ${JSON.stringify(
+                    response.data
+                )}, Response status: ${response.status},
+                Response User ID: ${response.data.user.userId} >>`
+            );
+            return { success: false, error: response.data.error };
         }
     } catch (error: any) {
         const status = error.response?.status;
