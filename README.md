@@ -1,11 +1,8 @@
 <div align=center>
   <img src="images/New Distrack.jpg" width=225 radius=10 />
-</div>
- 
-<div align=center>
-  <h1>Dis.Track</h1>
-  <h2>Discord VSCode Leaderboard Tracker Extension</h2>
-</div>
+
+# DisTrack
+## The VSCode Leaderboard Tracker Extension
 
 
 This Visual Studio Code extension helps you track and analyze your coding sessions by integrating with Discord and logging coding activity to a MongoDB database. It displays your active coding time, language usage, and various achievements through a dedicated Discord bot. 
@@ -18,6 +15,8 @@ This Visual Studio Code extension helps you track and analyze your coding sessio
 | Website | Website for DisTrack | ![Latest Release](https://img.shields.io/github/v/release/JayNightmare/DisTrack-Website?label=Latest%20Release) | [GitHub](https://github.com/JayNightmare/DisTrack-Website), [Website](https://distrack.endpoint-system.uk/) |
 | Backend Endpoints | API Endpoints for business logic | ![Latest Release](https://img.shields.io/github/v/release/JayNightmare/DisTrack-Backend-Endpoint-Server?label=Latest%20Release) | [GitHub](https://github.com/JayNightmare/DisTrack-Backend-Endpoint-Server)
 | Frontend Endpoints | Bot Crawler Rich Embed logic | ![Latest Release](https://img.shields.io/github/v/release/JayNightmare/DisTrack-Frontend-Endpoint-Server?label=Latest%20Release) | [GitHub](https://github.com/JayNightmare/DisTrack-Frontend-Endpoint-Server)
+
+</div>
 
 ## Table of Contents
 - [Table of Contents](#table-of-contents)
