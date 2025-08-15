@@ -2,7 +2,7 @@
     "name": "dis-track",
     "displayName": "Dis.Track | Discord VSCode Tracker",
     "description": "This will track your time in VSCode. Add the bot to your server to check your progress!",
-    "version": "0.7.2",
+    "version": "0.8.0",
     "publisher": "JayNightmare",
     "author": {
         "name": "Jay",
@@ -80,11 +80,6 @@
             {
                 "command": "extension.refreshPanel",
                 "title": "Refresh Leaderboard",
-                "category": "DisTrack"
-            },
-            {
-                "command": "extension.clearTokens",
-                "title": "Clear Stored Tokens",
                 "category": "DisTrack"
             }
         ],

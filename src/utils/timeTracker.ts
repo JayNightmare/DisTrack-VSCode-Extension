@@ -23,9 +23,6 @@ export function startSession() {
 
     // Immediately set active language on session start (no debounce)
     immediateLanguageChange();
-
-    vscode.window.showInformationMessage("<< Started coding session! >>");
-    console.log(`<< Session started at: ${sessionStartTime} >>`);
 }
 
 // End the coding session and return the total duration in seconds

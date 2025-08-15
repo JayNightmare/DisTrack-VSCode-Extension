@@ -100,7 +100,6 @@ export async function sendSessionData(
                 headers: { Authorization: `${apiToken}` },
             }
         );
-        console.log("<< Data sent successfully:", response.data);
     } catch (error) {
         console.error("<< Failed to send session data: ", error);
         throw error; // Re-throw to allow calling code to handle the error
@@ -176,8 +175,7 @@ export async function getDiscordUsername(
         );
 
         if (response.status === 200) {
-            const username = response.data.username; // Assuming the API returns `username` in the response
-            console.log(`<< Fetched Discord username: ${username} >>`);
+            const username = response.data.username;
             return username;
         }
     } catch (error: any) {
@@ -252,5 +250,46 @@ export async function getLanguageDurations(userId: string) {
     } catch (error) {
         console.error("<< Failed to fetch language durations:", error);
         return {};
+    }
+}
+
+// New function to link account with 6-digit code
+export async function linkAccountWithCode(
+    linkCode: string
+): Promise<{ success: boolean; userId?: string; error?: string }> {
+    try {
+        console.log(`<< Linking account with code ${linkCode} >>`);
+
+        const response = await axios.post(
+            `${endpointUrl}/extension/link`,
+            { linkCode },
+            {
+                headers: { Authorization: `${apiToken}` },
+            }
+        );
+
+        if (response.status === 200 && response.data.user.userId) {
+            return { success: true, userId: response.data.user.userId };
+        } else {
+            return { success: false, error: response.data.error };
+        }
+    } catch (error: any) {
+        const status = error.response?.status;
+        let errorMessage = "Failed to link account";
+
+        if (status === 400) {
+            errorMessage = `Invalid code format ${linkCode}`;
+        } else if (status === 404) {
+            errorMessage = "Code not found or expired";
+        } else if (status === 409) {
+            errorMessage = "Code already used";
+        } else {
+            console.error(
+                "<< Error linking account with code:",
+                error.response?.data || error.message
+            );
+        }
+
+        return { success: false, error: errorMessage };
     }
 }
