@@ -69,7 +69,10 @@ async function handleExtensionUpdate(
                 const doc = await vscode.workspace.openTextDocument(
                     changelogPath
                 );
-                await vscode.window.showTextDocument(doc, { preview: true });
+                await vscode.window.showTextDocument(doc, {
+                    preview: true,
+                    viewColumn: vscode.ViewColumn.One,
+                });
             } catch (err) {
                 console.error("<< Failed to open CHANGELOG.md >>", err);
             }

@@ -1,8 +1,12 @@
+<div align=center>
+  <img src="./images/New Distrack.jpg"/>
+
 # Change Log
 
-All notable changes to the "DisTrack" extension will be documented in this file.
+</div>
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+
+All notable changes to the "DisTrack" extension will be documented in this file.
 
 ## Patch Notes
 # v0.8.0
@@ -24,7 +28,6 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
   * Improved language support
   * Added root server endpoint easter egg
   * Improved overall performance
-
 
 # v0.7.11
 * Updated the VSCode Engine Versionand VCSE Type to 1.96.2 so it can run on other VSCode IDE versions
