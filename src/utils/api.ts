@@ -100,7 +100,6 @@ export async function sendSessionData(
                 headers: { Authorization: `${apiToken}` },
             }
         );
-        console.log("<< Data sent successfully:", response.data);
     } catch (error) {
         console.error("<< Failed to send session data: ", error);
         throw error; // Re-throw to allow calling code to handle the error
@@ -175,13 +174,8 @@ export async function getDiscordUsername(
             }
         );
 
-        console.log(
-            `<< Fetched Discord user data: ${JSON.stringify(response.data)} >>`
-        );
-
         if (response.status === 200) {
             const username = response.data.username;
-            console.log(`<< Fetched Discord username: ${username} >>`);
             return username;
         }
     } catch (error: any) {
@@ -275,16 +269,8 @@ export async function linkAccountWithCode(
         );
 
         if (response.status === 200 && response.data.user.userId) {
-            console.log("<< Account linked successfully with code >>");
             return { success: true, userId: response.data.user.userId };
         } else {
-            console.log(`<< Invalid or expired code ${response.data.error} >>`);
-            console.log(
-                `<< Response data: ${JSON.stringify(
-                    response.data
-                )}, Response status: ${response.status},
-                Response User ID: ${response.data.user.userId} >>`
-            );
             return { success: false, error: response.data.error };
         }
     } catch (error: any) {

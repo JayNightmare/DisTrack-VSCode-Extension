@@ -90,9 +90,6 @@ export async function activate(context: vscode.ExtensionContext) {
                     return;
                 }
 
-                console.log(
-                    `<< Found Discord ID in global state: ${discordId} >>`
-                );
                 console.log("<< Validating Discord ID with API... >>");
 
                 try {
@@ -203,12 +200,6 @@ export async function activate(context: vscode.ExtensionContext) {
                                     linkCode
                                 );
 
-                                console.log(
-                                    `<< Link account response: ${JSON.stringify(
-                                        result
-                                    )} >>`
-                                );
-
                                 if (result.success && result.userId) {
                                     // Store the Discord ID received from the API
                                     await context.globalState.update(
@@ -223,9 +214,6 @@ export async function activate(context: vscode.ExtensionContext) {
                                         sessionManager.startSession();
                                     }
 
-                                    console.log(
-                                        `<< Account linked successfully! Discord ID: ${result.userId} >>`
-                                    );
                                     vscode.window.showInformationMessage(
                                         "Discord account linked successfully!"
                                     );
@@ -233,9 +221,6 @@ export async function activate(context: vscode.ExtensionContext) {
                                         "success"
                                     );
                                 } else {
-                                    console.log(
-                                        `<< Account linking failed: ${result.error} >>`
-                                    );
                                     vscode.window.showErrorMessage(
                                         result.error ||
                                             "Failed to link account. Please try again."
@@ -342,15 +327,8 @@ export async function deactivate() {
         const languages = getLanguageDurations();
         const streakData = await getStreakData(discordId);
 
-        console.log(`<< Discord User Id: ${discordId} >>`);
-        console.log(`<< Discord Username: ${discordUsername} >>`);
-        console.log(`<< Session duration: ${duration} seconds >>`);
-        console.log(`<< Last session date: ${lastSessionDate} >>`);
-        console.log(`<< Session languages: ${JSON.stringify(languages)} >>`);
-        console.log(`<< Streak Data: ${JSON.stringify(streakData)} >>`);
-
         if (!discordId || !duration) {
-            console.log(
+            console.error(
                 "<< Error: Missing required data. Discord ID or Duration is null >>"
             );
             return;
