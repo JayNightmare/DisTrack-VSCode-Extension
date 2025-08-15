@@ -11,6 +11,7 @@ import {
 import { SessionManager } from "./utils/sessionManager";
 import { ConfigManager } from "./utils/configManager";
 import { setActivity } from "./utils/rpcDiscord";
+import * as path from "path";
 
 let extensionContext: vscode.ExtensionContext;
 const statusBar = vscode.window.createStatusBarItem(
@@ -32,6 +33,62 @@ function getValidDiscordId(context: vscode.ExtensionContext): string | null {
         context.globalState.update("discordId", undefined);
     }
     return null;
+}
+
+// Handle extension update: clear discordId, open changelog, prompt reconnect
+async function handleExtensionUpdate(
+    context: vscode.ExtensionContext
+): Promise<boolean> {
+    try {
+        const extension = vscode.extensions.getExtension(
+            "JayNightmare.dis-track"
+        );
+        const currentVersion: string =
+            (extension?.packageJSON?.version as string) ?? "0.0.0";
+        const previousVersion =
+            context.globalState.get<string>("extensionVersion");
+
+        console.log(
+            `<< Extension Update Detected >>\nCurrent Version: ${currentVersion}\nPrevious Version: ${previousVersion}`
+        );
+
+        if (previousVersion !== currentVersion) {
+            // Mark update, clear Discord link, and persist new version
+            await context.globalState.update("discordId", null);
+            await context.globalState.update(
+                "extensionVersion",
+                currentVersion
+            );
+
+            // Open CHANGELOG.md
+            try {
+                const changelogPath = path.join(
+                    context.extensionPath,
+                    "CHANGELOG.md"
+                );
+                const doc = await vscode.workspace.openTextDocument(
+                    changelogPath
+                );
+                await vscode.window.showTextDocument(doc, { preview: true });
+            } catch (err) {
+                console.error("<< Failed to open CHANGELOG.md >>", err);
+            }
+
+            // Prompt user to reconnect
+            const action = await vscode.window.showInformationMessage(
+                `Dis.Track updated to v${currentVersion}. Please reconnect your Discord account.`,
+                "Link Discord"
+            );
+            if (action === "Link Discord") {
+                vscode.commands.executeCommand("extension.updateDiscordId");
+            }
+
+            return true;
+        }
+    } catch (error) {
+        console.error("<< Error during update handling >>", error);
+    }
+    return false;
 }
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -57,6 +114,9 @@ export async function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    // Handle extension updates before reading stored IDs
+    const wasUpdated = await handleExtensionUpdate(context);
+
     // Create status bar for linking Discord
     let discordId = getValidDiscordId(context);
     updateStatusBar(statusBar, discordId);
@@ -67,9 +127,11 @@ export async function activate(context: vscode.ExtensionContext) {
         console.log(`<< Discord User ID: ${discordId} >>`);
         sessionManager.startSession();
     } else {
-        vscode.window.showErrorMessage(
-            "Discord ID is required. Click the status bar button to link."
-        );
+        if (!wasUpdated) {
+            vscode.window.showErrorMessage(
+                "Discord ID is required. Click the status bar button to link."
+            );
+        }
     }
 
     // Command to reconnect Discord

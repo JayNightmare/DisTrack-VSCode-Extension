@@ -5,22 +5,26 @@ All notable changes to the "DisTrack" extension will be documented in this file.
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 ## Patch Notes
-# v0.7.2
+# v0.8.0
 * Major Fix:
+  * Updated login process
+  * Created new endpoints
+  * Created Public endpoints which the public can fetch from to display the leaderboard from other websites
+  * Fixed memory leak with session timer and vscode extension
+  * Fixed bug with username not being set when using the vscode extension
+  * Leaderboard update
+
+
+* Minor Fix:
   * Improved the security of the backend
   * Added endpoint to cloudflare
   * Added auth to validate endpoint data
   * Updated the website
-  * Leaderboard update
   * Database variable updates
   * Improved language support
-  * Created new endpoints
-  * Created Public endpoints which the public can fetch from to display the leaderboard from other websites
   * Added root server endpoint easter egg
   * Improved overall performance
-  * Fixed memory leak with session timer and vscode extension
-  * Fixed bug with username not being set when using the vscode extension
-  * 
+
 
 # v0.7.11
 * Updated the VSCode Engine Versionand VCSE Type to 1.96.2 so it can run on other VSCode IDE versions
