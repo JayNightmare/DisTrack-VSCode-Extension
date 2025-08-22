@@ -10,6 +10,7 @@ import {
 } from "./utils/api";
 import { SessionManager } from "./utils/sessionManager";
 import { ConfigManager } from "./utils/configManager";
+import { SecretManager } from "./utils/secretManager";
 import { setActivity } from "./utils/rpcDiscord";
 import * as path from "path";
 
@@ -21,6 +22,7 @@ const statusBar = vscode.window.createStatusBarItem(
 let discordCodingViewProvider: DiscordCodingViewProvider;
 let sessionManager: SessionManager;
 let configManager: ConfigManager;
+let secretManager: SecretManager;
 
 // Helper function to validate Discord ID from global state
 function getValidDiscordId(context: vscode.ExtensionContext): string | null {
@@ -61,21 +63,21 @@ async function handleExtensionUpdate(
             );
 
             // Open CHANGELOG.md
-            try {
-                const changelogPath = path.join(
-                    context.extensionPath,
-                    "CHANGELOG.md"
-                );
-                const doc = await vscode.workspace.openTextDocument(
-                    changelogPath
-                );
-                await vscode.window.showTextDocument(doc, {
-                    preview: true,
-                    viewColumn: vscode.ViewColumn.One,
-                });
-            } catch (err) {
-                console.error("<< Failed to open CHANGELOG.md >>", err);
-            }
+            // try {
+            //     const changelogPath = path.join(
+            //         context.extensionPath,
+            //         "CHANGELOG.md"
+            //     );
+            //     const doc = await vscode.workspace.openTextDocument(
+            //         changelogPath
+            //     );
+            //     await vscode.window.showTextDocument(doc, {
+            //         preview: true,
+            //         viewColumn: vscode.ViewColumn.One,
+            //     });
+            // } catch (err) {
+            //     console.error("<< Failed to open CHANGELOG.md >>", err);
+            // }
 
             // Prompt user to reconnect
             const action = await vscode.window.showInformationMessage(
@@ -101,6 +103,28 @@ export async function activate(context: vscode.ExtensionContext) {
     // Initialize managers
     configManager = ConfigManager.getInstance();
     sessionManager = new SessionManager(context);
+    secretManager = SecretManager.getInstance(context);
+
+    // Try to migrate from file-based secrets to secure storage
+    await secretManager.migrateFromFiles();
+
+    // Check if secrets are configured, if not, prompt user to link Discord
+    const areSecretsConfigured = await secretManager.areSecretsConfigured();
+    if (!areSecretsConfigured) {
+        const setupChoice = await vscode.window.showWarningMessage(
+            "DisTrack needs to be configured. Link your Discord account to get started.",
+            "Link Discord Account",
+            "Setup Later"
+        );
+
+        if (setupChoice === "Link Discord Account") {
+            vscode.commands.executeCommand("extension.updateDiscordId");
+        } else {
+            vscode.window.showInformationMessage(
+                'You can link your Discord account later using the "Link to Discord" button in the status bar.'
+            );
+        }
+    }
 
     discordCodingViewProvider = new DiscordCodingViewProvider(context);
     context.subscriptions.push(
@@ -274,14 +298,28 @@ export async function activate(context: vscode.ExtensionContext) {
                                     discordId = result.userId;
                                     updateStatusBar(statusBar, discordId);
 
+                                    // NEW: Store credentials if received
+                                    if (result.credentials) {
+                                        console.log(
+                                            "<< Storing credentials from account linking >>"
+                                        );
+                                        await secretManager.storeCredentialsFromLinking(
+                                            result.credentials
+                                        );
+                                        vscode.window.showInformationMessage(
+                                            "Discord account linked and credentials configured successfully!"
+                                        );
+                                    } else {
+                                        vscode.window.showInformationMessage(
+                                            "Discord account linked successfully!"
+                                        );
+                                    }
+
                                     // Start session if not already active
                                     if (!sessionManager.isSessionActive()) {
                                         sessionManager.startSession();
                                     }
 
-                                    vscode.window.showInformationMessage(
-                                        "Discord account linked successfully!"
-                                    );
                                     discordCodingViewProvider.updateWebviewContent(
                                         "success"
                                     );

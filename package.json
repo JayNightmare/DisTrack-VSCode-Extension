@@ -2,7 +2,7 @@
     "name": "dis-track",
     "displayName": "Dis.Track | Discord VSCode Tracker",
     "description": "This will track your time in VSCode. Add the bot to your server to check your progress!",
-    "version": "0.8.0",
+    "version": "0.8.1",
     "publisher": "JayNightmare",
     "author": {
         "name": "Jay",
@@ -81,6 +81,21 @@
                 "command": "extension.refreshPanel",
                 "title": "Refresh Leaderboard",
                 "category": "DisTrack"
+            },
+            {
+                "command": "extension.setupDisTrack",
+                "title": "Setup",
+                "category": "DisTrack"
+            },
+            {
+                "command": "extension.clearDisTrackSecrets",
+                "title": "Clear Secrets",
+                "category": "DisTrack"
+            },
+            {
+                "command": "extension.checkDisTrackConfig",
+                "title": "Check Configuration",
+                "category": "DisTrack"
             }
         ],
         "configuration": {
@@ -112,6 +127,11 @@
                     "minimum": 100,
                     "maximum": 5000,
                     "description": "Delay in milliseconds before detecting language changes (prevents excessive updates)."
+                },
+                "distrack.endpointUrl": {
+                    "type": "string",
+                    "default": "https://api.endpoint-system.uk",
+                    "description": "DisTrack API endpoint URL."
                 }
             }
         }

@@ -1,77 +1,49 @@
 import axios from "axios";
 import * as vscode from "vscode";
+import { SecretManager } from "./secretManager";
 require("dotenv").config();
 
-async function getAPILink() {
-    const extension = vscode.extensions.getExtension("JayNightmare.dis-track");
-    if (!extension) {
+async function getAPILink(): Promise<string> {
+    const secretManager = SecretManager.getInstance();
+    const endpointUrl = secretManager.getEndpointUrl();
+
+    if (!endpointUrl) {
         vscode.window.showErrorMessage(
-            "<< Extension 'JayNightmare.dis-track' not found >>"
+            "<< API endpoint URL not configured. Please run setup first. >>"
         );
         return "";
     }
-    const linkPath = vscode.Uri.joinPath(
-        extension.extensionUri,
-        "assets",
-        "link.txt"
-    );
 
-    try {
-        const linkData = await vscode.workspace.fs.readFile(linkPath);
-        return Buffer.from(linkData).toString("utf8").trim();
-    } catch (error) {
-        vscode.window.showErrorMessage("<< Failed to read link.txt >>");
-        return "";
-    }
+    return endpointUrl;
 }
 
-async function getBotToken() {
-    const tokenPath = vscode.Uri.joinPath(
-        vscode.extensions.getExtension("JayNightmare.dis-track")!.extensionUri,
-        "assets",
-        "discord.txt"
-    );
+async function getBotToken(): Promise<string> {
+    const secretManager = SecretManager.getInstance();
+    const botToken = await secretManager.getDiscordBotToken();
 
-    try {
-        const tokenData = await vscode.workspace.fs.readFile(tokenPath);
-        return Buffer.from(tokenData).toString("utf8").trim();
-    } catch (error) {
+    if (!botToken) {
         vscode.window.showErrorMessage(
-            "<< Failed to read token from discord.txt >>"
+            "<< Discord bot token not configured. Please run setup first. >>"
         );
         return "";
     }
+
+    return botToken;
 }
 
-async function getAPIToken() {
-    const tokenPath = vscode.Uri.joinPath(
-        vscode.extensions.getExtension("JayNightmare.dis-track")!.extensionUri,
-        "assets",
-        "api.txt"
-    );
+async function getAPIToken(): Promise<string> {
+    const secretManager = SecretManager.getInstance();
+    const apiToken = await secretManager.getApiToken();
 
-    try {
-        const tokenData = await vscode.workspace.fs.readFile(tokenPath);
-        return Buffer.from(tokenData).toString("utf8").trim();
-    } catch (error) {
+    if (!apiToken) {
         vscode.window.showErrorMessage(
-            "<< Failed to read token from discord.txt >>"
+            "<< API token not configured. Please run setup first. >>"
         );
         return "";
     }
+
+    return apiToken;
 }
-
-// String to store the API endpoint URL
-let endpointUrl: string;
-getAPILink().then((link) => {
-    endpointUrl = link;
-});
-
-// Fetch the API token from the file
-let apiToken: string;
-getAPIToken().then((token) => {
-    apiToken = token;
-});
 
 // Function to send session data
 export async function sendSessionData(
@@ -86,6 +58,13 @@ export async function sendSessionData(
     }
 ) {
     try {
+        const endpointUrl = await getAPILink();
+        const apiToken = await getAPIToken();
+
+        if (!endpointUrl || !apiToken) {
+            throw new Error("Missing API configuration");
+        }
+
         const response = await axios.post(
             `${endpointUrl}/coding-session`,
             {
@@ -203,6 +182,14 @@ export async function getDiscordUsername(
 
 export async function getLeaderboard() {
     try {
+        const endpointUrl = await getAPILink();
+        const apiToken = await getAPIToken();
+
+        if (!endpointUrl || !apiToken) {
+            console.error("<< Missing API configuration for leaderboard >>");
+            return [];
+        }
+
         const response = await axios.get(`${endpointUrl}/leaderboard`, {
             headers: { Authorization: `${apiToken}` },
         });
@@ -216,6 +203,14 @@ export async function getLeaderboard() {
 // New function to fetch user profile
 export async function getUserProfile(userId: string) {
     try {
+        const endpointUrl = await getAPILink();
+        const apiToken = await getAPIToken();
+
+        if (!endpointUrl || !apiToken) {
+            console.error("<< Missing API configuration for user profile >>");
+            return null;
+        }
+
         const response = await axios.get(
             `${endpointUrl}/user-profile/${userId}`,
             {
@@ -231,6 +226,14 @@ export async function getUserProfile(userId: string) {
 
 export async function getStreakData(userId: string) {
     try {
+        const endpointUrl = await getAPILink();
+        const apiToken = await getAPIToken();
+
+        if (!endpointUrl || !apiToken) {
+            console.error("<< Missing API configuration for streak data >>");
+            return { currentStreak: 0, longestStreak: 0 };
+        }
+
         const response = await axios.get(`${endpointUrl}/streak/${userId}`, {
             headers: { Authorization: `${apiToken}` },
         });
@@ -243,6 +246,16 @@ export async function getStreakData(userId: string) {
 
 export async function getLanguageDurations(userId: string) {
     try {
+        const endpointUrl = await getAPILink();
+        const apiToken = await getAPIToken();
+
+        if (!endpointUrl || !apiToken) {
+            console.error(
+                "<< Missing API configuration for language durations >>"
+            );
+            return {};
+        }
+
         const response = await axios.get(`${endpointUrl}/languages/${userId}`, {
             headers: { Authorization: `${apiToken}` },
         });
@@ -253,25 +266,47 @@ export async function getLanguageDurations(userId: string) {
     }
 }
 
-// New function to link account with 6-digit code
-export async function linkAccountWithCode(
-    linkCode: string
-): Promise<{ success: boolean; userId?: string; error?: string }> {
+// New function to link account with 6-digit code and receive credentials
+export async function linkAccountWithCode(linkCode: string): Promise<{
+    success: boolean;
+    userId?: string;
+    error?: string;
+    credentials?: {
+        apiToken: string;
+        botToken: string;
+        endpointUrl: string;
+    };
+}> {
     try {
         console.log(`<< Linking account with code ${linkCode} >>`);
 
+        // Use the default endpoint URL for linking since we don't have credentials yet
+        const secretManager = SecretManager.getInstance();
+        const defaultEndpointUrl = secretManager.getEndpointUrl();
+
         const response = await axios.post(
-            `${endpointUrl}/extension/link`,
-            { linkCode },
+            `${defaultEndpointUrl}/extension/link`,
             {
-                headers: { Authorization: `${apiToken}` },
+                linkCode,
+                extensionVersion: vscode.extensions.getExtension(
+                    "JayNightmare.dis-track"
+                )?.packageJSON.version,
+                vsCodeVersion: vscode.version,
             }
         );
 
-        if (response.status === 200 && response.data.user.userId) {
-            return { success: true, userId: response.data.user.userId };
+        if (response.status === 200 && response.data.success) {
+            console.log("<< Account linking successful >>");
+            return {
+                success: true,
+                userId: response.data.userId,
+                credentials: response.data.credentials, // New: API credentials from backend
+            };
         } else {
-            return { success: false, error: response.data.error };
+            return {
+                success: false,
+                error: response.data.error || "Failed to link account",
+            };
         }
     } catch (error: any) {
         const status = error.response?.status;

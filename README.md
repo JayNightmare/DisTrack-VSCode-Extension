@@ -1,5 +1,5 @@
 <div align=center>
-  <img src="images/New Distrack.jpg" width=225 radius=10 />
+  <img src="https://github.com/JayNightmare/DisTrack-Discord-Bot/blob/main/images/New%20Distrack.jpg?raw=true" width=225 radius=10 />
 
 # DisTrack
 ## The VSCode Leaderboard Tracker Extension
@@ -19,14 +19,20 @@ This Visual Studio Code extension helps you track and analyze your coding sessio
 </div>
 
 ## Table of Contents
-- [Table of Contents](#table-of-contents)
-- [Features](#features)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-- [Commands](#commands)
-- [Contributing](#contributing)
-- [License](#license)
+- [DisTrack](#distrack)
+  - [The VSCode Leaderboard Tracker Extension](#the-vscode-leaderboard-tracker-extension)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+  - [Security](#security)
+    - [For New Users:](#for-new-users)
+    - [For Existing Users (Upgrading):](#for-existing-users-upgrading)
+    - [Available Commands:](#available-commands)
+  - [Usage](#usage)
+  - [Commands](#commands)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Features
 
@@ -53,8 +59,39 @@ This Visual Studio Code extension helps you track and analyze your coding sessio
 
 ## Configuration
 
-1. **MongoDB Setup**:
-   - Ensure the IP address for your server is whitelisted in MongoDB Atlas or your MongoDB instance.
+1. **Easy Setup (Recommended)**:
+   - Install the DisTrack extension from the VS Code marketplace
+   - When prompted, click "Link Discord Account" 
+   - This will open the DisTrack website where you can link your Discord account
+   - Enter the 6-character code back in VS Code
+   - **Done!** All API credentials are automatically configured securely
+
+2. **Alternative Setup**:
+   - Use the command `DisTrack: Setup` for manual configuration
+   - Choose "Manual Setup (Advanced)" if you have your own API credentials
+
+## Security
+
+⚠️ **Important Security Notice**: As of version 0.8.0, DisTrack uses secure credential storage.
+
+### For New Users:
+- Use the built-in setup wizard: `DisTrack: Setup`
+- All credentials are stored securely using VS Code's Secret Storage API
+- Your sensitive information is encrypted and protected
+
+### For Existing Users (Upgrading):
+- The extension will automatically migrate your credentials to secure storage
+- **Important**: After successful migration, run the migration script to remove old credential files:
+  - Windows: Run `migrate-security.bat`
+  - Unix/Linux: Run `migrate-security.sh`
+- Verify your setup with: `DisTrack: Check Configuration`
+
+### Available Commands:
+- `DisTrack: Setup` - Configure credentials securely
+- `DisTrack: Check Configuration` - Verify your setup
+- `DisTrack: Clear Secrets` - Reset all stored credentials
+
+For detailed security information, see [SECURITY.md](SECURITY.md).
    
 ## Usage
 

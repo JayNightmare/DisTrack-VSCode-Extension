@@ -9,6 +9,9 @@
 All notable changes to the "DisTrack" extension will be documented in this file.
 
 ## Patch Notes
+# v0.8.1
+* Minor Security Update
+
 # v0.8.0
 * Major Fix:
   * Updated login process
