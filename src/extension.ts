@@ -60,23 +60,6 @@ async function handleExtensionUpdate(
                 currentVersion
             );
 
-            // Open CHANGELOG.md
-            try {
-                const changelogPath = path.join(
-                    context.extensionPath,
-                    "CHANGELOG.md"
-                );
-                const doc = await vscode.workspace.openTextDocument(
-                    changelogPath
-                );
-                await vscode.window.showTextDocument(doc, {
-                    preview: true,
-                    viewColumn: vscode.ViewColumn.One,
-                });
-            } catch (err) {
-                console.error("<< Failed to open CHANGELOG.md >>", err);
-            }
-
             // Prompt user to reconnect
             const action = await vscode.window.showInformationMessage(
                 `Dis.Track updated to v${currentVersion}. Please reconnect your Discord account.`,
@@ -227,7 +210,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
                 // Step 1: Open the DisTrack website for account linking
                 const websiteUrl =
-                    "https://distrack.endpoint-system.uk/link-account";
+                    "https://distrack.nexusgit.info/link-account";
 
                 try {
                     await vscode.env.openExternal(vscode.Uri.parse(websiteUrl));
@@ -309,7 +292,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 } catch (error) {
                     console.error("<< Error opening website >>", error);
                     vscode.window.showErrorMessage(
-                        "Failed to open the DisTrack website. Please visit https://distrack.endpoint-system.uk/link-account manually."
+                        "Failed to open the DisTrack website. Please visit https://distrack.nexusgit.info/link-account manually."
                     );
                 }
             }
