@@ -62,23 +62,6 @@ async function handleExtensionUpdate(
                 currentVersion
             );
 
-            // Open CHANGELOG.md
-            // try {
-            //     const changelogPath = path.join(
-            //         context.extensionPath,
-            //         "CHANGELOG.md"
-            //     );
-            //     const doc = await vscode.workspace.openTextDocument(
-            //         changelogPath
-            //     );
-            //     await vscode.window.showTextDocument(doc, {
-            //         preview: true,
-            //         viewColumn: vscode.ViewColumn.One,
-            //     });
-            // } catch (err) {
-            //     console.error("<< Failed to open CHANGELOG.md >>", err);
-            // }
-
             // Prompt user to reconnect
             const action = await vscode.window.showInformationMessage(
                 `Dis.Track updated to v${currentVersion}. Please reconnect your Discord account.`,
