@@ -19,14 +19,16 @@ This Visual Studio Code extension helps you track and analyze your coding sessio
 </div>
 
 ## Table of Contents
-- [Table of Contents](#table-of-contents)
-- [Features](#features)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-- [Commands](#commands)
-- [Contributing](#contributing)
-- [License](#license)
+- [DisTrack](#distrack)
+  - [The VSCode Leaderboard Tracker Extension](#the-vscode-leaderboard-tracker-extension)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+  - [Usage](#usage)
+  - [Commands](#commands)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Features
 
@@ -50,6 +52,12 @@ This Visual Studio Code extension helps you track and analyze your coding sessio
 3. **Setup MongoDB**:
    - Ensure MongoDB is installed and running.
    - Create a database and note the connection URI.
+
+4. **Extension Package**:
+   ```bash
+   vsce package
+   ```
+   - Run to package the extension to use on VSCode.
 
 ## Configuration
 
