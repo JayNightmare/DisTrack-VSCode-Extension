@@ -10,7 +10,11 @@ import {
 } from "./utils/api";
 import { SessionManager } from "./utils/sessionManager";
 import { ConfigManager } from "./utils/configManager";
-import { setActivity } from "./utils/rpcDiscord";
+import {
+    setActivity,
+    restartRichPresence,
+    isRestartingRichPresence,
+} from "./utils/rpcDiscord";
 import * as path from "path";
 
 let extensionContext: vscode.ExtensionContext;
@@ -170,32 +174,58 @@ export async function activate(context: vscode.ExtensionContext) {
         )
     );
 
-    // Command to refresh Discord RPC
+    // Command to refresh / restart Discord RPC
     context.subscriptions.push(
         vscode.commands.registerCommand("extension.refreshRPC", async () => {
             const enableRichPresence = vscode.workspace
                 .getConfiguration("extension")
                 .get<boolean>("enableRichPresence");
-            if (enableRichPresence) {
-                try {
-                    await setActivity();
-                    vscode.window.showInformationMessage(
-                        "Discord RPC activity refreshed successfully!"
-                    );
-                } catch (error) {
-                    console.error(
-                        "<< Failed to refresh Discord RPC activity >>",
-                        error
-                    );
-                    vscode.window.showErrorMessage(
-                        "Failed to refresh Discord RPC activity"
-                    );
-                }
-            } else {
+            if (!enableRichPresence) {
                 vscode.window.showWarningMessage(
                     "Rich Presence is currently disabled in settings"
                 );
+                return;
             }
+
+            if (isRestartingRichPresence()) {
+                vscode.window.showInformationMessage(
+                    "Rich Presence restart already in progress..."
+                );
+                return;
+            }
+
+            const previousStatus = statusBar.text;
+            const refreshLabel = "$(sync~spin) Refreshing Discord RPC...";
+            statusBar.text = refreshLabel;
+
+            await vscode.window.withProgress(
+                {
+                    location: vscode.ProgressLocation.Notification,
+                    title: "Refreshing Discord Rich Presence",
+                    cancellable: false,
+                },
+                async (progress) => {
+                    progress.report({ message: "Stopping current activity" });
+                    try {
+                        await restartRichPresence();
+                        progress.report({ message: "Updating activity" });
+                        await setActivity();
+                        vscode.window.showInformationMessage(
+                            "Discord RPC activity restarted successfully!"
+                        );
+                    } catch (error) {
+                        console.error(
+                            "<< Failed to restart Discord RPC activity >>",
+                            error
+                        );
+                        vscode.window.showErrorMessage(
+                            "Failed to restart Discord RPC activity"
+                        );
+                    } finally {
+                        statusBar.text = previousStatus; // restore
+                    }
+                }
+            );
         })
     );
 

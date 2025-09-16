@@ -9,6 +9,12 @@
 All notable changes to the "DisTrack" extension will be documented in this file.
 
 ## Patch Notes
+# v0.8.3
+* Added full restart logic for Discord Rich Presence when using "Refresh Discord RPC" command.
+* Visual feedback: spinner in status bar and progress notification during refresh.
+* Prevents concurrent refresh attempts and avoids duplicate RPC listeners.
+* Minor internal refactor of RPC lifecycle for stability.
+
 # v0.8.1
 * Minor Security Update
 
