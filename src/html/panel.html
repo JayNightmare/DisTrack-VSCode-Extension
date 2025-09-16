@@ -225,7 +225,7 @@
         </div>
         <div style="text-align: center; margin-top: 20px;">
             <button class="connect-button" onclick="window.refreshRPC()" id="refresh-rpc-button">
-                Refresh RPC Activity
+                <span id="refresh-text">Refresh RPC Activity</span>
             </button>
         </div>
         <script>
@@ -238,12 +238,24 @@
                     if (message.command === 'reconnectStatus') {
                         const text = document.getElementById('reconnect-text');
                         
+                        
                         // Update the text to show the appropriate icon
                         text.textContent = message.success ? '✅' : '❌';
                         
                         // Reset after 2 seconds
                         setTimeout(() => {
                             text.textContent = 'Re-link Discord';
+                        }, 2000);
+                    } else if (message.command === 'refreshRPC') {
+                        const text = document.getElementById('refresh-text');
+                        
+                        
+                        // Update the text to show the appropriate icon
+                        text.textContent = message.success ? '✅' : '❌';
+                        
+                        // Reset after 2 seconds
+                        setTimeout(() => {
+                            text.textContent = 'Refresh RPC Activity';
                         }, 2000);
                     }
                 });
@@ -254,6 +266,10 @@
         
                 function reconnectDiscord() {
                     vscode.postMessage({ command: 'reconnectDiscord' });
+                }
+
+                function refreshRPC() {
+                    vscode.postMessage({ command: 'refreshRPC' });
                 }
         
                 function formatTime(seconds) {
@@ -295,11 +311,6 @@
                 window.addEventListener('unload', () => {
                     clearInterval(timerInterval);
                 });
-        
-                // Expose functions to the global scope
-                function refreshRPC() {
-                    vscode.postMessage({ command: 'refreshRPC' });
-                }
 
                 window.connectDiscord = connectDiscord;
                 window.reconnectDiscord = reconnectDiscord;

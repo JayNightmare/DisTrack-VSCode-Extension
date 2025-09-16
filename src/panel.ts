@@ -58,6 +58,11 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
                     );
                     await this.updateWebview();
                     break;
+                case "refreshRPC":
+                    await vscode.commands.executeCommand(
+                        "extension.refreshRPC"
+                    );
+                    break;
             }
         });
     }
