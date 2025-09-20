@@ -2,7 +2,7 @@
     "name": "dis-track",
     "displayName": "Dis.Track | Discord VSCode Tracker",
     "description": "This will track your time in VSCode. Add the bot to your server to check your progress!",
-    "version": "0.8.4",
+    "version": "0.8.5",
     "publisher": "JayNightmare",
     "author": {
         "name": "Jay",
