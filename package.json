@@ -2,14 +2,14 @@
     "name": "dis-track",
     "displayName": "Dis.Track | Discord VSCode Tracker",
     "description": "This will track your time in VSCode. Add the bot to your server to check your progress!",
-    "version": "0.8.3",
+    "version": "0.8.4",
     "publisher": "JayNightmare",
     "author": {
         "name": "Jay",
         "email": "jn3.enquiries@gmail.com"
     },
     "engines": {
-        "vscode": "^1.96.2"
+        "vscode": "^1.96.0"
     },
     "icon": "images/distrack.png",
     "repository": {
@@ -136,6 +136,7 @@
         "@typescript-eslint/parser": "^8.24.0",
         "@vscode/test-cli": "^0.0.10",
         "@vscode/test-electron": "^2.4.1",
+        "@vscode/vsce": "^3.6.0",
         "dotenv-webpack": "^8.1.0",
         "eslint": "^9.20.0",
         "ts-loader": "^9.5.1",
@@ -144,7 +145,6 @@
         "webpack-cli": "^6.0.1"
     },
     "dependencies": {
-        "@vscode/vsce": "^3.6.0",
         "axios": "^1.7.9",
         "discord-rpc": "^4.0.1",
         "dotenv": "^16.4.7",
