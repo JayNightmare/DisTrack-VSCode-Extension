@@ -27,6 +27,7 @@ This Visual Studio Code extension helps you track and analyze your coding sessio
   - [Configuration](#configuration)
   - [Usage](#usage)
   - [Commands](#commands)
+  - [Release Workflow](#release-workflow)
   - [Contributing](#contributing)
   - [License](#license)
 
@@ -86,6 +87,15 @@ This Visual Studio Code extension helps you track and analyze your coding sessio
 - **Recents**: Shows information from recent session
 - **Set Bio**: Sets the bio for the profile command
 - **Bug Reports and Suggestions**: Sends your feedback to the developement team so we can improve the extension and bot
+
+## Release Workflow
+To automatically create a release, create a tag through the cli:
+```bash
+git tag vX.X.X
+git push origin --tags
+```
+Once you push the tag, the release workflow should trigger and create a release package for you on GitHub
+
 
 ## Contributing
 
