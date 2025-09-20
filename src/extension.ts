@@ -61,11 +61,7 @@ async function handleExtensionUpdate(
 
         const e = await isAccountLinked(userId as string);
 
-        if (
-            (previousVersion !== currentVersion &&
-                previousVersion === undefined) ||
-            e === false
-        ) {
+        if (e === false || previousVersion !== currentVersion) {
             // Mark update, clear Discord link, and persist new version
             await context.globalState.update("discordId", null);
             await context.globalState.update(
