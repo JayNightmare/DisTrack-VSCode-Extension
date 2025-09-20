@@ -7,6 +7,7 @@ import {
     getDiscordUsername,
     getStreakData,
     linkAccountWithCode,
+    isAccountLinked,
 } from "./utils/api";
 import { SessionManager } from "./utils/sessionManager";
 import { ConfigManager } from "./utils/configManager";
@@ -56,7 +57,15 @@ async function handleExtensionUpdate(
             `<< Extension Update Detected >>\nCurrent Version: ${currentVersion}\nPrevious Version: ${previousVersion}`
         );
 
-        if (previousVersion !== currentVersion) {
+        const userId = context.globalState.get("discordId");
+
+        const e = await isAccountLinked(userId as string);
+
+        if (
+            (previousVersion !== currentVersion &&
+                previousVersion === undefined) ||
+            e === false
+        ) {
             // Mark update, clear Discord link, and persist new version
             await context.globalState.update("discordId", null);
             await context.globalState.update(
@@ -74,6 +83,12 @@ async function handleExtensionUpdate(
             }
 
             return true;
+        } else if (previousVersion === currentVersion || e === true) {
+            // Just update the version if already linked
+            await context.globalState.update(
+                "extensionVersion",
+                currentVersion
+            );
         }
     } catch (error) {
         console.error("<< Error during update handling >>", error);

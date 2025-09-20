@@ -293,3 +293,24 @@ export async function linkAccountWithCode(
         return { success: false, error: errorMessage };
     }
 }
+
+// Return true or false if the user has linked their account
+export async function isAccountLinked(userId: string): Promise<boolean> {
+    try {
+        const response = await axios.get(
+            `${endpointUrl}/user-profile/${userId}`,
+            {
+                headers: { Authorization: `${apiToken}` },
+            }
+        );
+
+        if (response.status === 200 && response.data.displayName !== null) {
+            return true;
+        } else {
+            return false;
+        }
+    } catch (error) {
+        console.error("<< Failed to check if account is linked:", error);
+        return false;
+    }
+}
