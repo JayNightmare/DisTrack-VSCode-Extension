@@ -40,7 +40,7 @@ function getValidDiscordId(context: vscode.ExtensionContext): string | null {
     return null;
 }
 
-// Handle extension update: clear discordId, open changelog, prompt reconnect
+// Handle extension update: prompt reconnect only if not already linked
 async function handleExtensionUpdate(
     context: vscode.ExtensionContext
 ): Promise<boolean> {
@@ -57,19 +57,34 @@ async function handleExtensionUpdate(
             `<< Extension Update Detected >>\nCurrent Version: ${currentVersion}\nPrevious Version: ${previousVersion}`
         );
 
-        const userId = context.globalState.get("discordId");
-
-        const e = await isAccountLinked(userId as string);
-
-        if (e === false || previousVersion !== currentVersion) {
-            // Mark update, clear Discord link, and persist new version
-            await context.globalState.update("discordId", null);
+        if (previousVersion !== currentVersion) {
+            // Persist new version
             await context.globalState.update(
                 "extensionVersion",
                 currentVersion
             );
 
-            // Prompt user to reconnect
+            // If Discord ID exists and account is linked (displayName set), skip prompting
+            const existingId = context.globalState.get<string>("discordId");
+            if (existingId) {
+                try {
+                    const linked = await isAccountLinked(existingId);
+                    if (linked) {
+                        console.log(
+                            "<< Update detected but account already linked; skipping link prompt >>"
+                        );
+                        return true;
+                    }
+                } catch (e) {
+                    console.warn(
+                        "<< Failed to verify link status during update >>",
+                        e
+                    );
+                    // Fall through to prompt just in case
+                }
+            }
+
+            // Prompt user to reconnect only if no ID or not linked
             const action = await vscode.window.showInformationMessage(
                 `Dis.Track updated to v${currentVersion}. Please reconnect your Discord account.`,
                 "Link Discord"
@@ -79,12 +94,6 @@ async function handleExtensionUpdate(
             }
 
             return true;
-        } else if (previousVersion === currentVersion || e === true) {
-            // Just update the version if already linked
-            await context.globalState.update(
-                "extensionVersion",
-                currentVersion
-            );
         }
     } catch (error) {
         console.error("<< Error during update handling >>", error);
