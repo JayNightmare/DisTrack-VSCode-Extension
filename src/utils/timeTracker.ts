@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 import { ConfigManager } from "./configManager";
-const { updateStreak } = require("./api.ts");
 
 export let sessionStartTime: Date | null = null;
 let activeLanguageStartTime: Date | null = null;

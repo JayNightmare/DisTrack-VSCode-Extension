@@ -1,14 +1,6 @@
 import * as vscode from "vscode";
 import { DiscordCodingViewProvider } from "./panel";
-import { getLanguageDurations } from "./utils/timeTracker";
-import {
-    sendSessionData,
-    checkAndValidateUserId,
-    getDiscordUsername,
-    getStreakData,
-    linkAccountWithCode,
-    isAccountLinked,
-} from "./utils/api";
+import { getLanguageDurations as getTrackedLanguageDurations } from "./utils/timeTracker";
 import { SessionManager } from "./utils/sessionManager";
 import { ConfigManager } from "./utils/configManager";
 import {
@@ -16,98 +8,43 @@ import {
     restartRichPresence,
     isRestartingRichPresence,
 } from "./utils/rpcDiscord";
-import * as path from "path";
+import { initializeBaseUrl } from "./api/baseUrl";
+import {
+    initializeTokenManager,
+    hasLinkedAccount,
+    getDeviceId,
+    storeTokens,
+    clearTokens,
+} from "./auth/tokenManager";
+import { SessionQueue } from "./sessions/sessionQueue";
+import { getStreakData } from "./utils/api";
+import { startLink, finishLink, LinkFinishResponse } from "./api/link";
 
 let extensionContext: vscode.ExtensionContext;
-const statusBar = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Left,
-    100
-);
+let statusBar: vscode.StatusBarItem;
 let discordCodingViewProvider: DiscordCodingViewProvider;
 let sessionManager: SessionManager;
 let configManager: ConfigManager;
-
-// Helper function to validate Discord ID from global state
-function getValidDiscordId(context: vscode.ExtensionContext): string | null {
-    const discordId = context.globalState.get<string>("discordId");
-    if (discordId && /^\d{15,32}$/.test(discordId)) {
-        return discordId;
-    }
-    // Clear invalid ID
-    if (discordId) {
-        context.globalState.update("discordId", undefined);
-    }
-    return null;
-}
-
-// Handle extension update: prompt reconnect only if not already linked
-async function handleExtensionUpdate(
-    context: vscode.ExtensionContext
-): Promise<boolean> {
-    try {
-        const extension = vscode.extensions.getExtension(
-            "JayNightmare.dis-track"
-        );
-        const currentVersion: string =
-            (extension?.packageJSON?.version as string) ?? "0.0.0";
-        const previousVersion =
-            context.globalState.get<string>("extensionVersion");
-
-        console.log(
-            `<< Extension Update Detected >>\nCurrent Version: ${currentVersion}\nPrevious Version: ${previousVersion}`
-        );
-
-        if (previousVersion !== currentVersion) {
-            // Persist new version
-            await context.globalState.update(
-                "extensionVersion",
-                currentVersion
-            );
-
-            // If Discord ID exists and account is linked (displayName set), skip prompting
-            const existingId = context.globalState.get<string>("discordId");
-            if (existingId) {
-                try {
-                    const linked = await isAccountLinked(existingId);
-                    if (linked) {
-                        console.log(
-                            "<< Update detected but account already linked; skipping link prompt >>"
-                        );
-                        return true;
-                    }
-                } catch (e) {
-                    console.warn(
-                        "<< Failed to verify link status during update >>",
-                        e
-                    );
-                    // Fall through to prompt just in case
-                }
-            }
-
-            // Prompt user to reconnect only if no ID or not linked
-            const action = await vscode.window.showInformationMessage(
-                `Dis.Track updated to v${currentVersion}. Please reconnect your Discord account.`,
-                "Link Discord"
-            );
-            if (action === "Link Discord") {
-                vscode.commands.executeCommand("extension.updateDiscordId");
-            }
-
-            return true;
-        }
-    } catch (error) {
-        console.error("<< Error during update handling >>", error);
-    }
-    return false;
-}
+let sessionQueue: SessionQueue;
+let linkInProgress = false;
 
 export async function activate(context: vscode.ExtensionContext) {
     console.log("<< Activating extension... >>");
     extensionContext = context;
 
-    // Initialize managers
+    statusBar = vscode.window.createStatusBarItem(
+        vscode.StatusBarAlignment.Left,
+        100
+    );
+    statusBar.command = "extension.updateDiscordId";
+    context.subscriptions.push(statusBar);
+
     configManager = ConfigManager.getInstance();
     sessionManager = new SessionManager(context);
+
+    sessionQueue = new SessionQueue(context);
+    sessionQueue.start();
+    context.subscriptions.push(sessionQueue);
 
     discordCodingViewProvider = new DiscordCodingViewProvider(context);
     context.subscriptions.push(
@@ -117,84 +54,50 @@ export async function activate(context: vscode.ExtensionContext) {
         )
     );
 
-    // If you want a command to refresh the new sidebar manually:
     context.subscriptions.push(
         vscode.commands.registerCommand("extension.refreshPanel", () => {
             discordCodingViewProvider.updateWebview();
         })
     );
 
-    // Handle extension updates before reading stored IDs
-    const wasUpdated = await handleExtensionUpdate(context);
+    await initializeBaseUrl(context);
+    await initializeTokenManager(context);
 
-    // Create status bar for linking Discord
-    let discordId = getValidDiscordId(context);
-    updateStatusBar(statusBar, discordId);
-    context.subscriptions.push(statusBar);
+    await refreshStatusBar();
 
-    // Initialize session tracking if Discord is linked
-    if (discordId) {
-        console.log(`<< Discord User ID: ${discordId} >>`);
-        sessionManager.startSession();
-    } else {
-        if (!wasUpdated) {
-            vscode.window.showErrorMessage(
-                "Discord ID is required. Click the status bar button to link."
-            );
-        }
-    }
-
-    // Command to reconnect Discord
     context.subscriptions.push(
         vscode.commands.registerCommand(
-            "extension.reconnectDiscord",
+            "extension.updateDiscordId",
             async () => {
-                console.log("<< Reconnect Discord button clicked >>");
-                const discordId = getValidDiscordId(context);
-
-                if (!discordId) {
-                    console.log(
-                        "<< No valid Discord ID found in global state >>"
-                    );
-                    vscode.window.showErrorMessage(
-                        "No valid Discord ID found. Please link your Discord account first."
-                    );
-                    return;
-                }
-
-                console.log("<< Validating Discord ID with API... >>");
-
-                try {
-                    const isValid = await checkAndValidateUserId(discordId);
-
-                    if (isValid) {
-                        console.log("<< Discord ID validation successful >>");
-                        vscode.window.showInformationMessage(
-                            "Discord account reconnected successfully!"
-                        );
-                        discordCodingViewProvider.updateWebviewContent(
-                            "success"
-                        );
-                    } else {
-                        console.log("<< Discord ID validation failed >>");
-                        vscode.window.showErrorMessage(
-                            "Failed to validate Discord ID. Please check your connection and try again."
-                        );
-                    }
-                } catch (error) {
-                    console.error(
-                        "<< Error during Discord validation >>",
-                        error
-                    );
-                    vscode.window.showErrorMessage(
-                        "An error occurred while validating Discord ID."
-                    );
-                }
+                await beginLinkFlow();
             }
         )
     );
 
-    // Command to refresh / restart Discord RPC
+    context.subscriptions.push(
+        vscode.commands.registerCommand(
+            "extension.reconnectDiscord",
+            async () => {
+                if (linkInProgress) {
+                    return;
+                }
+
+                const confirmation = await vscode.window.showWarningMessage(
+                    "Re-linking DisTrack will require confirmation in your browser.",
+                    { modal: true },
+                    "Continue"
+                );
+                if (confirmation !== "Continue") {
+                    return;
+                }
+
+                await clearTokens();
+                await refreshStatusBar();
+                await beginLinkFlow();
+            }
+        )
+    );
+
     context.subscriptions.push(
         vscode.commands.registerCommand("extension.refreshRPC", async () => {
             const enableRichPresence = vscode.workspace
@@ -242,126 +145,14 @@ export async function activate(context: vscode.ExtensionContext) {
                             "Failed to restart Discord RPC activity"
                         );
                     } finally {
-                        statusBar.text = previousStatus; // restore
+                        statusBar.text = previousStatus;
                     }
                 }
             );
         })
     );
 
-    // Command to update/link Discord ID via website
-    context.subscriptions.push(
-        vscode.commands.registerCommand(
-            "extension.updateDiscordId",
-            async () => {
-                console.log(
-                    "<< Starting website-based Discord linking process >>"
-                );
-
-                // Step 1: Open the DisTrack website for account linking
-                const websiteUrl =
-                    "https://distrack.nexusgit.info/link-account";
-
-                try {
-                    await vscode.env.openExternal(vscode.Uri.parse(websiteUrl));
-                    console.log(`<< Opened website: ${websiteUrl} >>`);
-
-                    // Show information message about the process
-                    vscode.window.showInformationMessage(
-                        "Please link your Discord account on the website, then return here to enter your 6-alphanumeric code."
-                    );
-
-                    // Step 2: Prompt for 6-alphanumeric code after a short delay
-                    setTimeout(async () => {
-                        const linkCode = await vscode.window.showInputBox({
-                            prompt: "Enter the 6-alphanumeric code from the DisTrack website",
-                            placeHolder: "e.g., 1A2B3C",
-                            validateInput: (value) => {
-                                if (value && !/^[A-Z0-9]{6}$/.test(value)) {
-                                    return "Code must be exactly 6 alphanumeric characters";
-                                }
-                                return null;
-                            },
-                            ignoreFocusOut: true,
-                        });
-
-                        console.log(
-                            `<< User entered link code: ${linkCode} >>`
-                        );
-
-                        if (linkCode && /^[A-Z0-9]{6}$/.test(linkCode)) {
-                            console.log(
-                                `<< Attempting to link account with code ${linkCode} >>`
-                            );
-
-                            try {
-                                const result = await linkAccountWithCode(
-                                    linkCode
-                                );
-
-                                if (result.success && result.userId) {
-                                    // Store the Discord ID received from the API
-                                    await context.globalState.update(
-                                        "discordId",
-                                        result.userId
-                                    );
-                                    discordId = result.userId;
-                                    updateStatusBar(statusBar, discordId);
-
-                                    // Start session if not already active
-                                    if (!sessionManager.isSessionActive()) {
-                                        sessionManager.startSession();
-                                    }
-
-                                    vscode.window.showInformationMessage(
-                                        "Discord account linked successfully!"
-                                    );
-                                    discordCodingViewProvider.updateWebviewContent(
-                                        "success"
-                                    );
-                                } else {
-                                    vscode.window.showErrorMessage(
-                                        result.error ||
-                                            "Failed to link account. Please try again."
-                                    );
-                                }
-                            } catch (error) {
-                                console.error(
-                                    "<< Error during account linking >>",
-                                    error
-                                );
-                                vscode.window.showErrorMessage(
-                                    "An error occurred while linking your account. Please try again."
-                                );
-                            }
-                        } else if (linkCode) {
-                            vscode.window.showErrorMessage(
-                                "Invalid code format. Please enter a 6-alphanumeric code."
-                            );
-                        }
-                    }, 1000);
-                } catch (error) {
-                    console.error("<< Error opening website >>", error);
-                    vscode.window.showErrorMessage(
-                        "Failed to open the DisTrack website. Please visit https://distrack.nexusgit.info/link-account manually."
-                    );
-                }
-            }
-        )
-    );
-
-    // Update configuration based on changes
     configManager.onConfigurationChanged((e) => {
-        if (
-            configManager.hasConfigurationChanged(
-                e,
-                "extension.enableRichPresence"
-            )
-        ) {
-            // SessionManager will handle Rich Presence changes internally
-            console.log("<< Rich Presence configuration changed >>");
-        }
-
         if (
             configManager.hasConfigurationChanged(
                 e,
@@ -372,80 +163,227 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    // Apply settings from configuration
     applyConfigurationSettings();
+
+    await ensureLinkedOnStartup();
+
+    console.log("<< Extension activated >>");
 }
 
-function updateStatusBar(
-    statusBar: vscode.StatusBarItem,
-    discordId?: string | null
-) {
-    statusBar.text = discordId ? "Connected to Discord" : "Link to Discord";
-    statusBar.command = "extension.updateDiscordId";
-    statusBar.tooltip =
-        "Click to link your Discord account via DisTrack website";
+async function ensureLinkedOnStartup() {
+    const linked = await hasLinkedAccount();
+    if (linked) {
+        await onLinkEstablished();
+        return;
+    }
+
+    await beginLinkFlow();
+}
+
+async function beginLinkFlow(): Promise<void> {
+    if (linkInProgress) {
+        return;
+    }
+
+    linkInProgress = true;
+    await refreshStatusBar(true);
+
+    try {
+        const deviceId = await getDeviceId();
+        const {
+            linkCode,
+            pollToken,
+            verificationUrl,
+            expiresIn,
+            pollInterval,
+        } = await startLink(deviceId);
+
+        await vscode.env.openExternal(vscode.Uri.parse(verificationUrl));
+        vscode.window.showInformationMessage(
+            `DisTrack linking code: ${linkCode}. Enter this code in your browser to finish linking.`
+        );
+
+        const tokens = await vscode.window.withProgress<LinkFinishResponse>(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: "Linking DisTrack account",
+                cancellable: true,
+            },
+            async (progress, cancellationToken) => {
+                return pollForLinkConfirmation({
+                    deviceId,
+                    pollToken,
+                    expiresIn,
+                    pollInterval,
+                    linkCode,
+                    progress,
+                    cancellationToken,
+                });
+            }
+        );
+
+        await storeTokens({
+            accessToken: tokens.access_token,
+            refreshToken: tokens.refresh_token,
+            expiresIn: tokens.expires_in,
+        });
+
+        vscode.window.showInformationMessage(
+            "DisTrack account linked. Sessions will sync automatically."
+        );
+
+        await onLinkEstablished();
+    } catch (error: any) {
+        if (error?.message) {
+            vscode.window.showErrorMessage(error.message);
+        } else {
+            console.error("<< Link flow failed >>", error);
+            vscode.window.showErrorMessage(
+                "Failed to link DisTrack account. Please try again."
+            );
+        }
+    } finally {
+        linkInProgress = false;
+        await refreshStatusBar();
+    }
+}
+
+interface PollOptions {
+    deviceId: string;
+    pollToken: string;
+    expiresIn: number;
+    pollInterval?: number;
+    linkCode: string;
+    progress: vscode.Progress<{ message?: string }>;
+    cancellationToken: vscode.CancellationToken;
+}
+
+async function pollForLinkConfirmation(
+    options: PollOptions
+): Promise<LinkFinishResponse> {
+    const {
+        deviceId,
+        pollToken,
+        expiresIn,
+        pollInterval,
+        linkCode,
+        progress,
+        cancellationToken,
+    } = options;
+
+    const deadline = Date.now() + expiresIn * 1000;
+    const intervalMs = Math.max(2000, Math.round((pollInterval ?? 2) * 1000));
+
+    while (Date.now() < deadline) {
+        if (cancellationToken.isCancellationRequested) {
+            throw new Error("Linking cancelled.");
+        }
+
+        progress.report({
+            message: `Waiting for confirmation (code ${linkCode})`,
+        });
+
+        try {
+            return await finishLink(deviceId, pollToken);
+        } catch (error: any) {
+            const status = error?.response?.status;
+
+            if (status === 404 || status === 409 || status === 425) {
+                await delay(intervalMs);
+                continue;
+            }
+
+            if (status === 410 || status === 400) {
+                throw new Error(
+                    "Link code expired. Please run the link command again."
+                );
+            }
+
+            throw error;
+        }
+    }
+
+    throw new Error("Link code expired. Please run the link command again.");
+}
+
+async function refreshStatusBar(spinner = false): Promise<void> {
+    if (spinner) {
+        statusBar.text = "$(sync~spin) Linking DisTrack...";
+        statusBar.tooltip = "Complete the linking in your browser.";
+        statusBar.show();
+        return;
+    }
+
+    const linked = await hasLinkedAccount();
+    statusBar.text = linked
+        ? "DisTrack: Linked"
+        : "DisTrack: Link account";
+    statusBar.tooltip = linked
+        ? "DisTrack is linked. Click to re-link."
+        : "Click to start the DisTrack linking flow.";
     statusBar.show();
 }
 
-function applyConfigurationSettings() {
-    const config = vscode.workspace.getConfiguration("extension");
-    const discordId = configManager.getConfigDiscordId();
+async function onLinkEstablished(): Promise<void> {
+    await refreshStatusBar();
 
-    console.log(`<< Config - Discord ID: ${discordId} >>`);
-
-    if (discordId) {
-        extensionContext.globalState.update("discordId", discordId);
+    if (!sessionManager.isSessionActive()) {
+        sessionManager.startSession();
     }
+
+    await sessionQueue.flush();
+    discordCodingViewProvider.updateWebview();
+}
+
+function applyConfigurationSettings() {
+    // Reserved for future configuration-driven behaviors.
+}
+
+function delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function deactivate() {
     console.log("<< Starting extension deactivation... >>");
 
-    // Dispose managers and clean up resources
-    if (sessionManager) {
-        sessionManager.dispose();
-    }
-
-    // Dispose status bar items
-    statusBar.dispose();
-
+    let duration: number | null = null;
     try {
-        const duration = await sessionManager.endSession();
-        const discordId = getValidDiscordId(extensionContext);
-        let discordUsername: string | null = null;
-        if (discordId) {
-            discordUsername = await getDiscordUsername(discordId);
-        } else {
-            console.log("<< No valid Discord ID found for session data >>");
-            vscode.window.showErrorMessage(
-                "No valid Discord ID found. Please link your Discord account first."
-            );
-            return;
-        }
-        const lastSessionDate = new Date().toISOString();
-        const languages = getLanguageDurations();
-        const streakData = await getStreakData(discordId);
-
-        if (!discordId || !duration) {
-            console.error(
-                "<< Error: Missing required data. Discord ID or Duration is null >>"
-            );
-            return;
-        }
-
-        console.log("<< Sending session data to Discord... >>");
-        await sendSessionData(
-            discordId,
-            discordUsername ?? "EFU",
-            duration,
-            lastSessionDate,
-            languages,
-            streakData
-        );
-        console.log("<< Session data sent successfully! >>");
+        duration = await sessionManager?.endSession();
     } catch (error) {
-        console.error(`<< Failed to send session data: ${error} >>`);
+        console.error("<< Failed to end active session >>", error);
     }
+
+    sessionManager?.dispose();
+    statusBar?.dispose();
+
+    if (duration) {
+        const sessionDate = new Date().toISOString();
+        const languages = getTrackedLanguageDurations();
+        let streak = { currentStreak: 0, longestStreak: 0 };
+
+        try {
+            streak = await getStreakData();
+        } catch (error) {
+            console.warn(
+                "<< Unable to fetch streak data during shutdown >>",
+                error
+            );
+        }
+
+        try {
+            await sessionQueue.enqueue({
+                duration,
+                sessionDate,
+                languages,
+                streakData: streak,
+            });
+            await sessionQueue.flush();
+        } catch (error) {
+            console.error("<< Failed to enqueue final session >>", error);
+        }
+    }
+
+    sessionQueue?.dispose();
 
     console.log("<< Extension Deactivated >>");
 }

@@ -1,9 +1,12 @@
 import * as vscode from "vscode";
 import {
-    getDiscordUsername,
     getLeaderboard,
     getStreakData,
     getLanguageDurations,
+    getUserProfile,
+    LeaderboardEntry,
+    StreakData,
+    UserProfile,
 } from "./utils/api";
 import { sessionStartTime } from "./utils/timeTracker";
 
@@ -76,19 +79,47 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
             return;
         }
 
-        const discordId = this._context.globalState.get<string>("discordId");
-        const isConnected = !!discordId;
-        const leaderboard = await getLeaderboard();
+        let profile: UserProfile | null = null;
+        let leaderboard: LeaderboardEntry[] = [];
+        let streak: StreakData = { currentStreak: 0, longestStreak: 0 };
+        let languages: Record<string, number> = {};
+
+        try {
+            profile = await getUserProfile();
+        } catch (error) {
+            console.warn("<< Failed to load user profile >>", error);
+        }
+
+        try {
+            leaderboard = await getLeaderboard();
+        } catch (error) {
+            console.warn("<< Failed to load leaderboard >>", error);
+        }
+
+        if (profile) {
+            try {
+                [streak, languages] = await Promise.all([
+                    getStreakData(),
+                    getLanguageDurations(),
+                ]);
+            } catch (error) {
+                console.warn("<< Failed to load user metrics >>", error);
+            }
+        }
 
         this._view.webview.html = await this.getHtmlContent(
-            isConnected,
-            leaderboard
+            profile,
+            leaderboard,
+            streak,
+            languages
         );
     }
 
     private async getHtmlContent(
-        isConnected: boolean,
-        leaderboard: any[]
+        profile: UserProfile | null,
+        leaderboard: LeaderboardEntry[],
+        streakData: StreakData,
+        languageDurations: Record<string, number>
     ): Promise<string> {
         console.log("<< Getting HTML Content >>");
 
@@ -102,17 +133,8 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
         let html = Buffer.from(htmlContent).toString("utf8");
 
         // Update connection status
+        const isConnected = Boolean(profile);
         const connectButtonContainer = isConnected ? "none" : "block";
-
-        // Get user data
-        const discordId = this._context.globalState.get<string>("discordId");
-        const username = discordId ? await getDiscordUsername(discordId) : "";
-        const streakData = discordId
-            ? await getStreakData(discordId)
-            : { currentStreak: 0, longestStreak: 0 };
-        const languageDurations = discordId
-            ? await getLanguageDurations(discordId)
-            : {};
 
         // Previous ranks stored in global state
         const previousRanks =
@@ -126,9 +148,10 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
             currentRanks[user.userId] = idx + 1;
         });
 
+        const currentUserId = profile?.userId ?? null;
         const userRank =
-            discordId && currentRanks[discordId]
-                ? currentRanks[discordId]
+            currentUserId && currentRanks[currentUserId]
+                ? currentRanks[currentUserId]
                 : "N/A";
         const userMedal =
             typeof userRank === "number" && userRank <= 3
@@ -136,8 +159,9 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
                 : "";
         const rankDelta =
             typeof userRank === "number" &&
-            previousRanks[discordId || ""] !== undefined
-                ? previousRanks[discordId || ""] - userRank
+            currentUserId &&
+            previousRanks[currentUserId] !== undefined
+                ? previousRanks[currentUserId] - userRank
                 : 0;
 
         // Update profile content
@@ -146,11 +170,13 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
                 ? this.getDeltaElement(rankDelta)
                 : "";
 
+        const displayName = profile?.displayName ?? profile?.username ?? "";
+
         const profileContent = isConnected
             ? `
             <div class="profile-section">
                 <div class="profile-item">
-                    <strong>Username:</strong> ${username}
+                    <strong>Username:</strong> ${displayName}
                 </div>
                 <br>
                 <div class="profile-item">
@@ -192,7 +218,6 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
 
         // Update leaderboard content
         let leaderboardContent = "";
-        const currentUserId = discordId;
         if (isConnected && leaderboard.length > 0) {
             // Find current user in leaderboard using 'id'
             const currentUserIndex = leaderboard.findIndex(
@@ -239,8 +264,8 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
             // Add current user at bottom if not in top 10
             if (currentUserRank > 10 && currentUserIndex >= 0) {
                 const delta =
-                    previousRanks[currentUserId || ""] !== undefined
-                        ? previousRanks[currentUserId || ""] - currentUserRank
+                    currentUserId && previousRanks[currentUserId] !== undefined
+                        ? previousRanks[currentUserId] - currentUserRank
                         : 0;
                 const deltaHtml = this.getDeltaElement(delta);
                 leaderboardContent += `
@@ -299,16 +324,23 @@ export class DiscordCodingViewProvider implements vscode.WebviewViewProvider {
     }
 
     private getMedalIcon(position: number) {
-        if (position === 1) return "🥇";
-        if (position === 2) return "🥈";
-        if (position === 3) return "🥉";
+        if (position === 1) {
+            return "🥇";
+        }
+        if (position === 2) {
+            return "🥈";
+        }
+        if (position === 3) {
+            return "🥉";
+        }
         return `${position}.`;
     }
 
     private getDeltaElement(delta: number) {
         if (delta > 0) {
             return `<span class="rank-delta up">▲${delta}</span>`;
-        } else if (delta < 0) {
+        }
+        if (delta < 0) {
             return `<span class="rank-delta down">▼${Math.abs(delta)}</span>`;
         }
         return `<span class="rank-delta same">—</span>`;
