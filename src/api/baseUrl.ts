@@ -17,9 +17,7 @@ export async function getApiBaseUrl(): Promise<string> {
         return cachedBaseUrl;
     }
 
-    const extension = vscode.extensions.getExtension(
-        "JayNightmare.dis-track"
-    );
+    const extension = vscode.extensions.getExtension("JayNightmare.dis-track");
     if (!extension) {
         throw new Error("DisTrack extension metadata unavailable");
     }

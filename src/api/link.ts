@@ -15,9 +15,7 @@ export interface LinkFinishResponse {
     expires_in: number;
 }
 
-export async function startLink(
-    deviceId: string
-): Promise<LinkStartResponse> {
+export async function startLink(deviceId: string): Promise<LinkStartResponse> {
     const baseUrl = await getApiBaseUrl();
     const response = await axios.post(`${baseUrl}/v1/link/start`, {
         device_id: deviceId,

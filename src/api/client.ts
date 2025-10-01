@@ -17,13 +17,7 @@ export async function request<T = unknown>(
     const baseUrl = await getApiBaseUrl();
     const url = `${baseUrl}${path}`;
 
-    const {
-        method = "GET",
-        body,
-        headers = {},
-        signal,
-        timeoutMs,
-    } = options;
+    const { method = "GET", body, headers = {}, signal, timeoutMs } = options;
 
     const config: AxiosRequestConfig = {
         url,

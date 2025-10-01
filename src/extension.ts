@@ -315,9 +315,7 @@ async function refreshStatusBar(spinner = false): Promise<void> {
     }
 
     const linked = await hasLinkedAccount();
-    statusBar.text = linked
-        ? "DisTrack: Linked"
-        : "DisTrack: Link account";
+    statusBar.text = linked ? "DisTrack: Linked" : "DisTrack: Link account";
     statusBar.tooltip = linked
         ? "DisTrack is linked. Click to re-link."
         : "Click to start the DisTrack linking flow.";

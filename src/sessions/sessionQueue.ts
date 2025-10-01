@@ -54,9 +54,11 @@ export class SessionQueue implements vscode.Disposable {
         this.stop();
     }
 
-    async enqueue(payload: Omit<SessionPayload, "session_id"> & {
-        session_id?: string;
-    }): Promise<string> {
+    async enqueue(
+        payload: Omit<SessionPayload, "session_id"> & {
+            session_id?: string;
+        }
+    ): Promise<string> {
         const sessionId = payload.session_id ?? uuidv4();
         const storedPayload: StoredSession = {
             session_id: sessionId,
