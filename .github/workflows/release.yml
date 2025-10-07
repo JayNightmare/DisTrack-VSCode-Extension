@@ -91,7 +91,7 @@ jobs:
                   11. Run `vsce package`, this will create the vscode extension. Should output as `dis-track-$VERSION.vsix`
                   12. Press `Ctrl+Shift+P` (or click the top search bar than press `>`) and type `Extensions: Install From VSIX`
                   13. Open the .vsix file
-                  14. Enjoy your very own Dis.Track Extension
+                  14. Enjoy your very own DisTrack Extension
 
                   # Different Errors you could encounter:
 
