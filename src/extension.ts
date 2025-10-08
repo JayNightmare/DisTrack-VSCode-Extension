@@ -23,6 +23,7 @@ import {
     finishLink,
     LinkFinishResponse,
     verifyLinkCode,
+    VerifyLinkResponse,
 } from "./api/link";
 
 let extensionContext: vscode.ExtensionContext;
@@ -229,21 +230,28 @@ async function beginLinkFlow(): Promise<void> {
             throw new Error("Linking cancelled. No code provided.");
         }
 
-        const tokens = await vscode.window.withProgress<LinkFinishResponse>(
+        const tokens = await vscode.window.withProgress<VerifyLinkResponse>(
             {
                 location: vscode.ProgressLocation.Notification,
                 title: "Verifying DisTrack link code",
                 cancellable: false,
             },
             async () => {
-                return verifyLinkCode(deviceId, code.trim().toUpperCase());
+                try {
+                    return await verifyLinkCode(code.trim().toUpperCase());
+                } catch (error) {
+                    throw error;
+                }
             }
         );
 
+        const startToken = await startLink(deviceId);
+        const finishToken = await finishLink(deviceId, startToken.pollToken);
+
         await storeTokens({
-            accessToken: tokens.access_token,
-            refreshToken: tokens.refresh_token,
-            expiresIn: tokens.expires_in,
+            accessToken: finishToken.access_token,
+            refreshToken: finishToken.refresh_token,
+            expiresIn: finishToken.expires_in,
         });
 
         vscode.window.showInformationMessage(

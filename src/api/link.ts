@@ -13,23 +13,38 @@ export interface LinkFinishResponse {
     expires_in: number;
 }
 
+export interface VerifyLinkResponse {
+    success: boolean;
+    user: {
+        userId: string;
+        username: string;
+        displayName: string;
+        extensionLinked: boolean;
+        totalCodingTime: number;
+    };
+}
+
 export async function verifyLinkCode(
-    deviceId: string,
     code: string
-): Promise<LinkFinishResponse> {
+): Promise<VerifyLinkResponse> {
     const baseUrl = await getApiBaseUrl();
-    const response = await axios.post(`${baseUrl}/extension/link`, {
-        device_id: deviceId,
-        code,
-    });
+    const response = await axios.post(`${baseUrl}/extension/link`, { code });
 
-    const { access_token, refresh_token, expires_in } = response.data ?? {};
+    const { success, user } = response.data ?? {};
 
-    if (!access_token || !refresh_token || !expires_in) {
+    if (
+        success !== true ||
+        !user ||
+        typeof user.userId !== "string" ||
+        typeof user.username !== "string" ||
+        typeof user.displayName !== "string" ||
+        typeof user.extensionLinked !== "boolean" ||
+        typeof user.totalCodingTime !== "number"
+    ) {
         throw new Error("Invalid response when verifying link code");
     }
 
-    return { access_token, refresh_token, expires_in };
+    return { success, user };
 }
 
 export async function startLink(deviceId: string): Promise<LinkStartResponse> {
@@ -39,8 +54,8 @@ export async function startLink(deviceId: string): Promise<LinkStartResponse> {
     });
 
     const {
-        poll_token: pollToken,
         code: linkCode,
+        poll_token: pollToken,
         expires_in: expiresIn,
     } = response.data ?? {};
 
@@ -49,8 +64,8 @@ export async function startLink(deviceId: string): Promise<LinkStartResponse> {
     }
 
     return {
-        pollToken,
         linkCode,
+        pollToken,
         expiresIn,
     };
 }
