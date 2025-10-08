@@ -13,6 +13,25 @@ export interface LinkFinishResponse {
     expires_in: number;
 }
 
+export async function verifyLinkCode(
+    deviceId: string,
+    code: string
+): Promise<LinkFinishResponse> {
+    const baseUrl = await getApiBaseUrl();
+    const response = await axios.post(`${baseUrl}/extension/link`, {
+        device_id: deviceId,
+        code,
+    });
+
+    const { access_token, refresh_token, expires_in } = response.data ?? {};
+
+    if (!access_token || !refresh_token || !expires_in) {
+        throw new Error("Invalid response when verifying link code");
+    }
+
+    return { access_token, refresh_token, expires_in };
+}
+
 export async function startLink(deviceId: string): Promise<LinkStartResponse> {
     const baseUrl = await getApiBaseUrl();
     const response = await axios.post(`${baseUrl}/v1/link/start`, {

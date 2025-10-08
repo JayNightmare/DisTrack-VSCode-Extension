@@ -18,7 +18,12 @@ import {
 } from "./auth/tokenManager";
 import { SessionQueue } from "./sessions/sessionQueue";
 import { getStreakData } from "./utils/api";
-import { startLink, finishLink, LinkFinishResponse } from "./api/link";
+import {
+    startLink,
+    finishLink,
+    LinkFinishResponse,
+    verifyLinkCode,
+} from "./api/link";
 
 let extensionContext: vscode.ExtensionContext;
 let statusBar: vscode.StatusBarItem;
@@ -190,30 +195,48 @@ async function beginLinkFlow(): Promise<void> {
 
     try {
         const deviceId = await getDeviceId();
-        const { linkCode, pollToken, expiresIn } = await startLink(deviceId);
 
-        // Construct a verification URL if your API offers a link page, otherwise just instruct the user
+        // Open link page where user will get a code
         const verifyUrl = "https://distrack.nexusgit.info/link-account";
         await vscode.env.openExternal(vscode.Uri.parse(verifyUrl));
-        vscode.window.showInformationMessage(
-            `DisTrack linking code: ${linkCode}. Enter this code in your browser to finish linking.`
-        );
+
+        // * Optionally call startLink to generate a server-side session and show code in VS Code too
+        // ? If the website already generates the code without this call, you can remove startLink.
+        let shownCode: string | undefined;
+        // try {
+        //     const { linkCode } = await startLink(deviceId);
+        //     shownCode = linkCode;
+        //     vscode.window.showInformationMessage(
+        //         `DisTrack code: ${linkCode}. Enter this code on the website.`
+        //     );
+        // } catch (e) {
+        //     // Non-fatal; proceed to prompt regardless
+        // }
+
+        const code = await vscode.window.showInputBox({
+            prompt: "Enter the 6-character code from the DisTrack website",
+            placeHolder: shownCode ?? "e.g., 1A2B3C",
+            validateInput: (value) => {
+                if (!value || !/^[A-Z0-9]{6}$/i.test(value.trim())) {
+                    return "Code must be 6 alphanumeric characters";
+                }
+                return null;
+            },
+            ignoreFocusOut: true,
+        });
+
+        if (!code) {
+            throw new Error("Linking cancelled. No code provided.");
+        }
 
         const tokens = await vscode.window.withProgress<LinkFinishResponse>(
             {
                 location: vscode.ProgressLocation.Notification,
-                title: "Linking DisTrack account",
-                cancellable: true,
+                title: "Verifying DisTrack link code",
+                cancellable: false,
             },
-            async (progress, cancellationToken) => {
-                return pollForLinkConfirmation({
-                    deviceId,
-                    pollToken,
-                    expiresIn,
-                    linkCode,
-                    progress,
-                    cancellationToken,
-                });
+            async () => {
+                return verifyLinkCode(deviceId, code.trim().toUpperCase());
             }
         );
 
