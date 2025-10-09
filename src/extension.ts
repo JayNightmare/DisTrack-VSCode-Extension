@@ -101,6 +101,8 @@ async function handleExtensionUpdate(
     return false;
 }
 
+export let exportCode: string;
+
 export async function activate(context: vscode.ExtensionContext) {
     console.log("<< Activating extension... >>");
     extensionContext = context;
@@ -293,6 +295,14 @@ export async function activate(context: vscode.ExtensionContext) {
                             console.log(
                                 `<< Attempting to link account with code ${linkCode} >>`
                             );
+
+                            exportCode = linkCode;
+
+                            if (!exportCode) {
+                                console.error(
+                                    `<< No export code provided, ${exportCode} >>`
+                                );
+                            }
 
                             try {
                                 const result = await linkAccountWithCode(

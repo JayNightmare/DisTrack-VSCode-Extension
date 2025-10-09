@@ -9,6 +9,27 @@
 All notable changes to the "DisTrack" extension will be documented in this file.
 
 ## Patch Notes
+# v0.9.5
+* Fixed issue where user would get an error if they tried to link an account.
+* Fixed issue where metadata would not update correctly.
+* Fixed issue with vscode marketplace listing.
+* Update to README.md file with new details.
+* Removed AI features due to instability and performance issues.
+* Removed AI agents from codebase due to instability and massive hallucinations.
+* Updated Linking Code logic
+* Added new error handling for linking code process
+* Added new error handling for API requests
+* Added Device ID validation and IP logging for security purposes
+  * Enhanced security measures to protect user data and prevent abuse.
+  * If you receive an error regarding IP logging, please contact support.
+  * **If you would like to disable this feature, please contact support.**
+* Added Terms of Service and Privacy Policy acceptance on first run.
+  * You will be prompted to accept the Terms of Service and Privacy Policy on first run.
+  * You can view the Terms of Service and Privacy Policy in the extension settings.
+  * If you do not accept the Terms of Service and Privacy Policy, you will not be able to use the extension.
+* Updated Discord Rich Presence.
+* Fixed issues with Discord Rich Presence not updating correctly.
+
 # v0.8.3
 * Added full restart logic for Discord Rich Presence when using "Refresh Discord RPC" command.
 * Visual feedback: spinner in status bar and progress notification during refresh.

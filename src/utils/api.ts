@@ -1,5 +1,7 @@
 import axios from "axios";
 import * as vscode from "vscode";
+import { generateDeviceId } from "./device";
+import { exportCode } from "../extension";
 require("dotenv").config();
 
 async function getAPILink() {
@@ -25,16 +27,16 @@ async function getAPILink() {
     }
 }
 
-async function getBotToken() {
-    const tokenPath = vscode.Uri.joinPath(
-        vscode.extensions.getExtension("JayNightmare.dis-track")!.extensionUri,
-        "assets",
-        "discord.txt"
-    );
-
+async function getBotToken(): Promise<string> {
     try {
-        const tokenData = await vscode.workspace.fs.readFile(tokenPath);
-        return Buffer.from(tokenData).toString("utf8").trim();
+        const token = process.env.DISCORD_BOT_TOKEN?.trim();
+
+        if (!token) {
+            throw new Error("Discord bot token is not configured");
+        }
+
+        return token;
+        // TODO: Grab from endpoint than set it as vscode secret
     } catch (error) {
         vscode.window.showErrorMessage(
             "<< Failed to read token from discord.txt >>"
@@ -43,16 +45,29 @@ async function getBotToken() {
     }
 }
 
-async function getAPIToken() {
-    const tokenPath = vscode.Uri.joinPath(
-        vscode.extensions.getExtension("JayNightmare.dis-track")!.extensionUri,
-        "assets",
-        "api.txt"
-    );
-
+async function getAPIToken(
+    deviceId: string,
+    linkCode: string
+): Promise<string> {
     try {
-        const tokenData = await vscode.workspace.fs.readFile(tokenPath);
-        return Buffer.from(tokenData).toString("utf8").trim();
+        // ? Grab from endpoint result from linking account
+        if (!deviceId) {
+            vscode.window.showErrorMessage(
+                "<< Invalid Discord ID format | Enable Developer Mode In Discord And Try Again >>"
+            );
+            return "";
+        }
+
+        const response = await axios.get(
+            `${endpointUrl}/extension/key/auth/${deviceId}/${linkCode}`
+        );
+        const token = response.data?.token ?? "";
+
+        if (!token) {
+            throw new Error("API token not found in response");
+        }
+
+        return token;
     } catch (error) {
         vscode.window.showErrorMessage(
             "<< Failed to read token from discord.txt >>"
@@ -62,14 +77,19 @@ async function getAPIToken() {
 }
 
 // String to store the API endpoint URL
-let endpointUrl: string;
+let endpointUrl = "";
 getAPILink().then((link) => {
     endpointUrl = link;
 });
 
+let deviceId = "";
+generateDeviceId().then(({ id }) => {
+    deviceId = id;
+});
+
 // Fetch the API token from the file
-let apiToken: string;
-getAPIToken().then((token) => {
+let apiToken = "";
+getAPIToken(deviceId, exportCode).then((token) => {
     apiToken = token;
 });
 
