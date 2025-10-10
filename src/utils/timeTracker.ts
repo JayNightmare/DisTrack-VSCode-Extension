@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 import { ConfigManager } from "./configManager";
-const { updateStreak } = require("./api.ts");
 
 export let sessionStartTime: Date | null = null;
 let activeLanguageStartTime: Date | null = null;
@@ -18,97 +17,94 @@ const configManager = ConfigManager.getInstance();
 
 // Start the coding session
 export function startSession() {
-    sessionStartTime = new Date();
-    activeLanguageStartTime = sessionStartTime; // Set the initial start time for active language
+  sessionStartTime = new Date();
+  activeLanguageStartTime = sessionStartTime; // Set the initial start time for active language
 
-    // Immediately set active language on session start (no debounce)
-    immediateLanguageChange();
+  // Immediately set active language on session start (no debounce)
+  immediateLanguageChange();
 }
 
 // End the coding session and return the total duration in seconds
 export function endSession(): number | null {
-    if (sessionStartTime) {
-        const sessionEndTime = new Date();
-        const totalDuration =
-            (sessionEndTime.getTime() - sessionStartTime.getTime()) / 1000;
+  if (sessionStartTime) {
+    const sessionEndTime = new Date();
+    const totalDuration =
+      (sessionEndTime.getTime() - sessionStartTime.getTime()) / 1000;
 
-        // Add time for the last active language
-        if (activeLanguage && activeLanguageStartTime) {
-            const timeSpent =
-                (sessionEndTime.getTime() - activeLanguageStartTime.getTime()) /
-                1000;
-            languageDurations[activeLanguage] =
-                (languageDurations[activeLanguage] || 0) + timeSpent;
-        }
-
-        console.log(`<< Session ended at: ${sessionEndTime} >>`);
-        console.log(`<< Total session duration: ${totalDuration} seconds >>`);
-        console.log(
-            `<< Language durations: ${JSON.stringify(languageDurations)} >>`
-        );
-
-        // Reset session variables
-        sessionStartTime = null;
-        activeLanguageStartTime = null;
-        activeLanguage = null;
-
-        return totalDuration;
+    // Add time for the last active language
+    if (activeLanguage && activeLanguageStartTime) {
+      const timeSpent =
+        (sessionEndTime.getTime() - activeLanguageStartTime.getTime()) / 1000;
+      languageDurations[activeLanguage] =
+        (languageDurations[activeLanguage] || 0) + timeSpent;
     }
-    return null;
+
+    console.log(`<< Session ended at: ${sessionEndTime} >>`);
+    console.log(`<< Total session duration: ${totalDuration} seconds >>`);
+    console.log(
+      `<< Language durations: ${JSON.stringify(languageDurations)} >>`,
+    );
+
+    // Reset session variables
+    sessionStartTime = null;
+    activeLanguageStartTime = null;
+    activeLanguage = null;
+
+    return totalDuration;
+  }
+  return null;
 }
 
 // Update active language and accumulate time (debounced version)
 function setActiveLanguage() {
-    const editor = vscode.window.activeTextEditor;
-    const now = new Date();
+  const editor = vscode.window.activeTextEditor;
+  const now = new Date();
 
-    if (editor) {
-        const currentLanguage = editor.document.languageId;
+  if (editor) {
+    const currentLanguage = editor.document.languageId;
 
-        // Accumulate time for the previous active language
-        if (
-            activeLanguage &&
-            activeLanguageStartTime &&
-            activeLanguage !== currentLanguage
-        ) {
-            const timeSpent =
-                (now.getTime() - activeLanguageStartTime.getTime()) / 1000;
-            languageDurations[activeLanguage] =
-                (languageDurations[activeLanguage] || 0) + timeSpent;
-            console.log(
-                `<< Added ${timeSpent} seconds to ${activeLanguage} >>`
-            );
-        }
-
-        // Update active language and reset start time
-        activeLanguage = currentLanguage;
-        activeLanguageStartTime = now;
-        console.log(`<< Switched active language to: ${currentLanguage} >>`);
+    // Accumulate time for the previous active language
+    if (
+      activeLanguage &&
+      activeLanguageStartTime &&
+      activeLanguage !== currentLanguage
+    ) {
+      const timeSpent =
+        (now.getTime() - activeLanguageStartTime.getTime()) / 1000;
+      languageDurations[activeLanguage] =
+        (languageDurations[activeLanguage] || 0) + timeSpent;
+      console.log(`<< Added ${timeSpent} seconds to ${activeLanguage} >>`);
     }
+
+    // Update active language and reset start time
+    activeLanguage = currentLanguage;
+    activeLanguageStartTime = now;
+    console.log(`<< Switched active language to: ${currentLanguage} >>`);
+  }
 }
 
 // Debounced version of setActiveLanguage to prevent excessive updates
 function debouncedSetActiveLanguage() {
-    // Clear existing timeout
-    if (languageChangeTimeout) {
-        clearTimeout(languageChangeTimeout);
-    }
+  // Clear existing timeout
+  if (languageChangeTimeout) {
+    clearTimeout(languageChangeTimeout);
+  }
 
-    // Set new timeout
-    const delay = configManager.getLanguageDetectionDelay();
-    languageChangeTimeout = setTimeout(() => {
-        setActiveLanguage();
-        languageChangeTimeout = null;
-    }, delay);
+  // Set new timeout
+  const delay = configManager.getLanguageDetectionDelay();
+  languageChangeTimeout = setTimeout(() => {
+    setActiveLanguage();
+    languageChangeTimeout = null;
+  }, delay);
 }
 
 // Immediate language change for critical events (like session start)
 export function immediateLanguageChange() {
-    if (languageChangeTimeout) {
-        clearTimeout(languageChangeTimeout);
-        languageChangeTimeout = null;
-    }
-    setActiveLanguage();
+  if (languageChangeTimeout) {
+    clearTimeout(languageChangeTimeout);
+    languageChangeTimeout = null;
+  }
+  setActiveLanguage();
 }
 
 // Get streak data
@@ -118,33 +114,33 @@ export function immediateLanguageChange() {
 
 // Get language durations
 export function getLanguageDurations() {
-    return languageDurations;
+  return languageDurations;
 }
 
 // Event listeners for language changes (now using debounced version)
 vscode.window.onDidChangeActiveTextEditor(() => {
-    debouncedSetActiveLanguage();
+  debouncedSetActiveLanguage();
 });
 
 vscode.workspace.onDidOpenTextDocument(() => {
-    debouncedSetActiveLanguage();
+  debouncedSetActiveLanguage();
 });
 
 // For text document changes, use more aggressive debouncing to prevent excessive updates
 let textChangeTimeout: NodeJS.Timeout | null = null;
 vscode.workspace.onDidChangeTextDocument(() => {
-    if (textChangeTimeout) {
-        clearTimeout(textChangeTimeout);
-    }
+  if (textChangeTimeout) {
+    clearTimeout(textChangeTimeout);
+  }
 
-    // Longer delay for text changes to avoid excessive language detection
-    textChangeTimeout = setTimeout(() => {
-        debouncedSetActiveLanguage();
-        textChangeTimeout = null;
-    }, configManager.getLanguageDetectionDelay() * 2);
+  // Longer delay for text changes to avoid excessive language detection
+  textChangeTimeout = setTimeout(() => {
+    debouncedSetActiveLanguage();
+    textChangeTimeout = null;
+  }, configManager.getLanguageDetectionDelay() * 2);
 });
 
 // Immediate language change on document close
 vscode.workspace.onDidCloseTextDocument(() => {
-    immediateLanguageChange();
+  immediateLanguageChange();
 });

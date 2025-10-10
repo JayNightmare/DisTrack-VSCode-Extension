@@ -108,7 +108,7 @@ All notable changes to the "DisTrack" extension will be documented in this file.
 * **MAJOR:** Fixed compile error which prevented the extension to load. This was due to a task which looked for errors when the extension was loading, but was not properly configured to handle the new version of the extension, causing it to get stuck and prevent the extension from completely loading.
 
 ### v0.6.2
-* Updated Name - Discord VSCode Tracker to Dis.Track | Discord VSCode Leaderboard Tracker
+* Updated Name - Discord VSCode Tracker to DisTrack | Discord VSCode Leaderboard Tracker
 
 ### v0.6.1
 * **MAJOR:** Fixed bug where extension would not appear on the status bar.

@@ -1,8 +1,8 @@
 {
-    "name": "dis-track",
-    "displayName": "Dis.Track | Discord VSCode Tracker",
+    "name": "distrack",
+    "displayName": "DisTrack | Discord VSCode Tracker",
     "description": "This will track your time in VSCode. Add the bot to your server to check your progress!",
-    "version": "0.8.6",
+    "version": "0.9.6",
     "publisher": "JayNightmare",
     "author": {
         "name": "Jay",
@@ -47,7 +47,7 @@
             "activitybar": [
                 {
                     "id": "discordCodingContainer",
-                    "title": "Dis.Track",
+                    "title": "DisTrack",
                     "icon": "images/D.png"
                 }
             ]
@@ -84,7 +84,7 @@
             }
         ],
         "configuration": {
-            "title": "Dis.Track Settings",
+            "title": "DisTrack Settings",
             "properties": {
                 "extension.updateDiscordId": {
                     "type": "string",
@@ -131,6 +131,7 @@
         "@types/discord-rpc": "^4.0.8",
         "@types/mocha": "^10.0.10",
         "@types/node": "^22.13.4",
+        "@types/uuid": "^10.0.0",
         "@types/vscode": "^1.96.2",
         "@typescript-eslint/eslint-plugin": "^8.24.0",
         "@typescript-eslint/parser": "^8.24.0",
@@ -148,6 +149,7 @@
         "axios": "^1.7.9",
         "discord-rpc": "^4.0.1",
         "dotenv": "^16.4.7",
-        "moment": "^2.30.1"
+        "moment": "^2.30.1",
+        "uuid": "^13.0.0"
     }
 }
