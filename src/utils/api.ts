@@ -1,15 +1,129 @@
-import { request } from "../api/client";
+import axios from "axios";
+import * as vscode from "vscode";
+import { generateDeviceId } from "./device";
+import { exportCode } from "../extension";
+require("dotenv").config();
 
-export interface LeaderboardEntry {
-  userId: string;
-  username: string;
-  totalCodingTime: number;
+async function getAPILink() {
+    const extension = vscode.extensions.getExtension("JayNightmare.dis-track");
+    if (!extension) {
+        vscode.window.showErrorMessage(
+            "<< Extension 'JayNightmare.dis-track' not found >>"
+        );
+        return "";
+    }
+    const linkPath = vscode.Uri.joinPath(
+        extension.extensionUri,
+        "assets",
+        "link.txt"
+    );
+
+    try {
+        const linkData = await vscode.workspace.fs.readFile(linkPath);
+        return Buffer.from(linkData).toString("utf8").trim();
+    } catch (error) {
+        vscode.window.showErrorMessage("<< Failed to read link.txt >>");
+        return "";
+    }
 }
 
-export interface UserProfile {
-  userId: string;
-  username: string;
-  displayName: string;
+async function getBotToken(): Promise<string> {
+    try {
+        const token = process.env.DISCORD_BOT_TOKEN?.trim();
+
+        if (!token) {
+            throw new Error("Discord bot token is not configured");
+        }
+
+        return token;
+        // TODO: Grab from endpoint than set it as vscode secret
+    } catch (error) {
+        vscode.window.showErrorMessage(
+            "<< Failed to read token from discord.txt >>"
+        );
+        return "";
+    }
+}
+
+async function getAPIToken(
+    deviceId: string,
+    linkCode: string
+): Promise<string> {
+    try {
+        // ? Grab from endpoint result from linking account
+        if (!deviceId) {
+            vscode.window.showErrorMessage(
+                "<< Invalid Discord ID format | Enable Developer Mode In Discord And Try Again >>"
+            );
+            return "";
+        }
+
+        const response = await axios.get(
+            `${endpointUrl}/extension/key/auth/${deviceId}/${linkCode}`
+        );
+        const token = response.data?.token ?? "";
+
+        if (!token) {
+            throw new Error("API token not found in response");
+        }
+
+        return token;
+    } catch (error) {
+        vscode.window.showErrorMessage(
+            "<< Failed to read token from discord.txt >>"
+        );
+        return "";
+    }
+}
+
+// String to store the API endpoint URL
+let endpointUrl = "";
+getAPILink().then((link) => {
+    endpointUrl = link;
+});
+
+let deviceId = "";
+generateDeviceId().then(({ id }) => {
+    deviceId = id;
+});
+
+// Fetch the API token from the file
+let apiToken = "";
+getAPIToken(deviceId, exportCode).then((token) => {
+    apiToken = token;
+});
+
+// Function to send session data
+export async function sendSessionData(
+    userId: string,
+    username: string,
+    duration: number,
+    sessionDate: string,
+    languages: Record<string, number>,
+    streakData: {
+        currentStreak: number;
+        longestStreak: number;
+    }
+) {
+    try {
+        const response = await axios.post(
+            `${endpointUrl}/coding-session`,
+            {
+                userId,
+                username,
+                duration,
+                sessionDate,
+                languages,
+                streakData,
+            },
+            {
+                headers: { Authorization: `${apiToken}` },
+            }
+        );
+    } catch (error) {
+        console.error("<< Failed to send session data: ", error);
+        throw error; // Re-throw to allow calling code to handle the error
+    }
 }
 
 export interface StreakData {

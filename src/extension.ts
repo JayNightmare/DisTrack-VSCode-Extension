@@ -34,6 +34,8 @@ let configManager: ConfigManager;
 let sessionQueue: SessionQueue;
 let linkInProgress = false;
 
+export let exportCode: string;
+
 export async function activate(context: vscode.ExtensionContext) {
     console.log("<< Activating extension... >>");
     extensionContext = context;
@@ -158,6 +160,116 @@ export async function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    // Command to update/link Discord ID via website
+    context.subscriptions.push(
+        vscode.commands.registerCommand(
+            "extension.updateDiscordId",
+            async () => {
+                console.log(
+                    "<< Starting website-based Discord linking process >>"
+                );
+
+                // Step 1: Open the DisTrack website for account linking
+                const websiteUrl =
+                    "https://distrack.nexusgit.info/link-account";
+
+                try {
+                    await vscode.env.openExternal(vscode.Uri.parse(websiteUrl));
+                    console.log(`<< Opened website: ${websiteUrl} >>`);
+
+                    // Show information message about the process
+                    vscode.window.showInformationMessage(
+                        "Please link your Discord account on the website, then return here to enter your 6-alphanumeric code."
+                    );
+
+                    // Step 2: Prompt for 6-alphanumeric code after a short delay
+                    setTimeout(async () => {
+                        const linkCode = await vscode.window.showInputBox({
+                            prompt: "Enter the 6-alphanumeric code from the DisTrack website",
+                            placeHolder: "e.g., 1A2B3C",
+                            validateInput: (value) => {
+                                if (value && !/^[A-Z0-9]{6}$/.test(value)) {
+                                    return "Code must be exactly 6 alphanumeric characters";
+                                }
+                                return null;
+                            },
+                            ignoreFocusOut: true,
+                        });
+
+                        console.log(
+                            `<< User entered link code: ${linkCode} >>`
+                        );
+
+                        if (linkCode && /^[A-Z0-9]{6}$/.test(linkCode)) {
+                            console.log(
+                                `<< Attempting to link account with code ${linkCode} >>`
+                            );
+
+                            exportCode = linkCode;
+
+                            if (!exportCode) {
+                                console.error(
+                                    `<< No export code provided, ${exportCode} >>`
+                                );
+                            }
+
+                            try {
+                                const result = await linkAccountWithCode(
+                                    linkCode
+                                );
+
+                                if (result.success && result.userId) {
+                                    // Store the Discord ID received from the API
+                                    await context.globalState.update(
+                                        "discordId",
+                                        result.userId
+                                    );
+                                    discordId = result.userId;
+                                    updateStatusBar(statusBar, discordId);
+
+                                    // Start session if not already active
+                                    if (!sessionManager.isSessionActive()) {
+                                        sessionManager.startSession();
+                                    }
+
+                                    vscode.window.showInformationMessage(
+                                        "Discord account linked successfully!"
+                                    );
+                                    discordCodingViewProvider.updateWebviewContent(
+                                        "success"
+                                    );
+                                } else {
+                                    vscode.window.showErrorMessage(
+                                        result.error ||
+                                            "Failed to link account. Please try again."
+                                    );
+                                }
+                            } catch (error) {
+                                console.error(
+                                    "<< Error during account linking >>",
+                                    error
+                                );
+                                vscode.window.showErrorMessage(
+                                    "An error occurred while linking your account. Please try again."
+                                );
+                            }
+                        } else if (linkCode) {
+                            vscode.window.showErrorMessage(
+                                "Invalid code format. Please enter a 6-alphanumeric code."
+                            );
+                        }
+                    }, 1000);
+                } catch (error) {
+                    console.error("<< Error opening website >>", error);
+                    vscode.window.showErrorMessage(
+                        "Failed to open the DisTrack website. Please visit https://distrack.nexusgit.info/link-account manually."
+                    );
+                }
+            }
+        )
+    );
+
+    // Update configuration based on changes
     configManager.onConfigurationChanged((e) => {
         if (
             configManager.hasConfigurationChanged(
