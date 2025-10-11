@@ -4,7 +4,7 @@ import { generateDeviceId } from "./device";
 import { getGlobalStateValue, updateGlobalStateValue } from "../extension";
 require("dotenv").config();
 
-const EXTENSION_IDENTIFIER = "JayNightmare.dis-track";
+const EXTENSION_IDENTIFIER = "JayNightmare.distrack";
 
 export interface LeaderboardEntry {
     userId: string;
@@ -44,7 +44,7 @@ async function getAPILink(): Promise<string> {
     const extension = vscode.extensions.getExtension(EXTENSION_IDENTIFIER);
     if (!extension) {
         vscode.window.showErrorMessage(
-            "<< Extension 'JayNightmare.dis-track' not found >>"
+            "<< Extension 'JayNightmare.distrack' not found >>"
         );
         return "";
     }
