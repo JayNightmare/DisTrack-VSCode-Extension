@@ -47,7 +47,7 @@ async function handleExtensionUpdate(
 ): Promise<boolean> {
     try {
         const extension = vscode.extensions.getExtension(
-            "JayNightmare.dis-track"
+            "JayNightmare.distrack"
         );
         const currentVersion: string =
             (extension?.packageJSON?.version as string) ?? "0.0.0";
@@ -87,7 +87,7 @@ async function handleExtensionUpdate(
 
             // Prompt user to reconnect only if no ID or not linked
             const action = await vscode.window.showInformationMessage(
-                `Dis.Track updated to v${currentVersion}. Please reconnect your Discord account.`,
+                `Distrack updated to v${currentVersion}. Please reconnect your Discord account.`,
                 "Link Discord"
             );
             if (action === "Link Discord") {

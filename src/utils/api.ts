@@ -5,10 +5,10 @@ import { exportCode } from "../extension";
 require("dotenv").config();
 
 async function getAPILink() {
-    const extension = vscode.extensions.getExtension("JayNightmare.dis-track");
+    const extension = vscode.extensions.getExtension("JayNightmare.distrack");
     if (!extension) {
         vscode.window.showErrorMessage(
-            "<< Extension 'JayNightmare.dis-track' not found >>"
+            "<< Extension 'JayNightmare.distrack' not found >>"
         );
         return "";
     }

@@ -1,8 +1,8 @@
 {
-    "name": "dis-track",
-    "displayName": "Dis.Track | Discord VSCode Tracker",
+    "name": "distrack",
+    "displayName": "Distrack | Discord VSCode Tracker",
     "description": "This will track your time in VSCode. Add the bot to your server to check your progress!",
-    "version": "0.9.6",
+    "version": "0.9.9",
     "publisher": "JayNightmare",
     "author": {
         "name": "Jay",
@@ -47,7 +47,7 @@
             "activitybar": [
                 {
                     "id": "discordCodingContainer",
-                    "title": "Dis.Track",
+                    "title": "Distrack",
                     "icon": "images/D.png"
                 }
             ]
@@ -84,7 +84,7 @@
             }
         ],
         "configuration": {
-            "title": "Dis.Track Settings",
+            "title": "Distrack Settings",
             "properties": {
                 "extension.updateDiscordId": {
                     "type": "string",
