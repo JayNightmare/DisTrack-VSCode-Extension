@@ -1,7 +1,6 @@
 import axios from "axios";
 import * as vscode from "vscode";
 import { generateDeviceId } from "./device";
-import { exportCode } from "../extension";
 require("dotenv").config();
 
 async function getAPILink() {
@@ -40,47 +39,88 @@ async function getTokens(deviceId: string, linkCode: string) {
     }
 }
 
-async function getBotToken(
-    deviceId: string,
-    linkCode: string
-): Promise<string> {
-    try {
-        const token = await getTokens(deviceId, linkCode);
+// (initialization moved to initializeApi)
 
-        if (!token) {
-            throw new Error("Discord bot token is not configured");
+// String to store the API endpoint URL and tokens
+let endpointUrl = "";
+let deviceId = "";
+let apiToken = "";
+let botToken = "";
+
+const DEVICE_SECRET_KEY = "deviceId";
+const API_TOKEN_SECRET_KEY = "apiToken";
+const BOT_TOKEN_SECRET_KEY = "botToken";
+
+// Exported initializer: ensures endpointUrl/deviceId are available and persists deviceId in secrets.
+export async function initializeApi(
+    context: vscode.ExtensionContext,
+    linkCode?: string
+): Promise<boolean> {
+    try {
+        endpointUrl = await getAPILink();
+
+        // Ensure deviceId exists in secret storage
+        let storedDeviceId = await context.secrets.get(DEVICE_SECRET_KEY);
+        if (!storedDeviceId) {
+            const generated = await generateDeviceId();
+            storedDeviceId = generated.id;
+            await context.secrets.store(DEVICE_SECRET_KEY, storedDeviceId);
+            console.log("<< Generated and stored new deviceId in secrets >>");
         }
 
-        return token.botToken;
+        deviceId = storedDeviceId ?? "";
+        console.log(`<< Device Id: ${deviceId} >>`);
+
+        if (!linkCode) {
+            apiToken = (await context.secrets.get(API_TOKEN_SECRET_KEY)) ?? "";
+            botToken = (await context.secrets.get(BOT_TOKEN_SECRET_KEY)) ?? "";
+            if (!apiToken) {
+                console.log("<< No stored API token found in secrets >>");
+            }
+        }
+
+        // If a linkCode is provided, attempt to fetch tokens immediately
+        if (linkCode) {
+            try {
+                const data = await getTokens(deviceId, linkCode);
+                apiToken = data.user.linkAPIKey ?? "";
+                botToken = data.discord.token ?? data.token ?? "";
+                console.log(`<< Api Token: ${apiToken} >>`);
+                if (apiToken) {
+                    await context.secrets.store(API_TOKEN_SECRET_KEY, apiToken);
+                }
+                if (botToken) {
+                    await context.secrets.store(BOT_TOKEN_SECRET_KEY, botToken);
+                }
+                return !!apiToken;
+            } catch (err) {
+                console.error(
+                    "<< Failed to fetch tokens during initializeApi >>",
+                    err
+                );
+                apiToken = "";
+                botToken = "";
+                return false;
+            }
+        }
+
+        return !!apiToken;
     } catch (error) {
-        vscode.window.showErrorMessage(
-            "<< Failed to read token from discord.txt >>"
-        );
-        return "";
+        console.error("<< initializeApi failed >>", error);
+        return false;
     }
 }
 
-// String to store the API endpoint URL
-let endpointUrl = "";
-getAPILink().then((link) => {
-    endpointUrl = link;
-});
-
-let deviceId = "";
-generateDeviceId().then(({ id }) => {
-    deviceId = id;
-});
-
-// Fetch the API token from the file
-let apiToken = "";
-getTokens(deviceId, exportCode)
-    .then((data) => {
-        apiToken = data.user?.linkAPIKey ?? "";
-    })
-    .catch((error) => {
-        console.error("<< Failed to fetch API token:", error);
-        apiToken = "";
-    });
+// Getter for bot token (may be populated by initializeApi)
+export async function getBotToken(): Promise<string> {
+    if (botToken) {
+        return botToken;
+    }
+    vscode.window.showErrorMessage(
+        "Discord bot token not available. Please link your account via the DisTrack website."
+    );
+    throw new Error("Bot token unavailable");
+}
 
 // Function to send session data
 export async function sendSessionData(
@@ -95,7 +135,14 @@ export async function sendSessionData(
     }
 ) {
     try {
-        const response = await axios.post(
+        if (!apiToken) {
+            vscode.window.showErrorMessage(
+                "Cannot send coding session data. Please link your account again."
+            );
+            throw new Error("Missing API token");
+        }
+
+        await axios.post(
             `${endpointUrl}/coding-session`,
             {
                 userId,
@@ -106,7 +153,7 @@ export async function sendSessionData(
                 streakData,
             },
             {
-                headers: { Authorization: `${apiToken}` },
+                headers: { Authorization: `Bearer ${apiToken}` },
             }
         );
     } catch (error) {
@@ -130,7 +177,7 @@ export async function checkAndValidateUserId(userId: string): Promise<boolean> {
     }
 
     try {
-        const botToken = await getBotToken(deviceId, exportCode);
+        const botToken = await getBotToken();
 
         const response = await axios.get(
             `https://discord.com/api/v10/users/${userId}`,
@@ -174,7 +221,7 @@ export async function getDiscordUsername(
         if (userId === null) {
             return null;
         }
-        const botToken = await getBotToken(deviceId, exportCode);
+        const botToken = await getBotToken();
 
         const response = await axios.get(
             `https://discord.com/api/v10/users/${userId}`,
@@ -212,8 +259,12 @@ export async function getDiscordUsername(
 
 export async function getLeaderboard() {
     try {
+        if (!apiToken) {
+            console.error("<< Missing API token for leaderboard >>");
+            return [];
+        }
         const response = await axios.get(`${endpointUrl}/leaderboard`, {
-            headers: { Authorization: `${apiToken}` },
+            headers: { Authorization: `Bearer ${apiToken}` },
         });
         return response.data;
     } catch (error) {
@@ -225,10 +276,14 @@ export async function getLeaderboard() {
 // New function to fetch user profile
 export async function getUserProfile(userId: string) {
     try {
+        if (!apiToken) {
+            console.error("<< Missing API token for user profile >>");
+            return null;
+        }
         const response = await axios.get(
             `${endpointUrl}/user-profile/${userId}`,
             {
-                headers: { Authorization: `${apiToken}` },
+                headers: { Authorization: `Bearer ${apiToken}` },
             }
         );
         return response.data;
@@ -240,8 +295,12 @@ export async function getUserProfile(userId: string) {
 
 export async function getStreakData(userId: string) {
     try {
+        if (!apiToken) {
+            console.error("<< Missing API token for streak data >>");
+            return { currentStreak: 0, longestStreak: 0 };
+        }
         const response = await axios.get(`${endpointUrl}/streak/${userId}`, {
-            headers: { Authorization: `${apiToken}` },
+            headers: { Authorization: `Bearer ${apiToken}` },
         });
         return response.data;
     } catch (error) {
@@ -252,8 +311,12 @@ export async function getStreakData(userId: string) {
 
 export async function getLanguageDurations(userId: string) {
     try {
+        if (!apiToken) {
+            console.error("<< Missing API token for language durations >>");
+            return {};
+        }
         const response = await axios.get(`${endpointUrl}/languages/${userId}`, {
-            headers: { Authorization: `${apiToken}` },
+            headers: { Authorization: `Bearer ${apiToken}` },
         });
         return response.data;
     } catch (error) {
@@ -264,12 +327,14 @@ export async function getLanguageDurations(userId: string) {
 
 // New function to link account with 6-digit code
 export async function linkAccountWithCode(
+    context: vscode.ExtensionContext,
     linkCode: string,
     deviceId: string
 ): Promise<{
     success: boolean;
     userId?: string;
     token?: string;
+    apiToken?: string;
     error?: string;
 }> {
     try {
@@ -279,15 +344,36 @@ export async function linkAccountWithCode(
             `${endpointUrl}/extension/link`,
             { linkCode, deviceId },
             {
-                headers: { Authorization: `${apiToken}` },
+                headers: apiToken
+                    ? { Authorization: `Bearer ${apiToken}` }
+                    : undefined,
             }
         );
 
         if (response.status === 200 && response.data.user.userId) {
+            const apiKey =
+                response.data.user?.linkAPIKey ||
+                response.data.user?.apiKey ||
+                response.data.apiToken ||
+                "";
+            const discordToken =
+                response.data.discord?.token || response.data.token || "";
+
+            if (apiKey) {
+                apiToken = apiKey;
+                await context.secrets.store(API_TOKEN_SECRET_KEY, apiToken);
+            }
+
+            if (discordToken) {
+                botToken = discordToken;
+                await context.secrets.store(BOT_TOKEN_SECRET_KEY, botToken);
+            }
+
             return {
                 success: true,
                 userId: response.data.user.userId,
-                token: response.data.discord.token,
+                token: discordToken,
+                apiToken: apiKey,
             };
         } else {
             return { success: false, error: response.data.error };
@@ -316,10 +402,14 @@ export async function linkAccountWithCode(
 // Return true or false if the user has linked their account
 export async function isAccountLinked(userId: string): Promise<boolean> {
     try {
+        if (!apiToken) {
+            console.error("<< Missing API token for link check >>");
+            return false;
+        }
         const response = await axios.get(
             `${endpointUrl}/user-profile/${userId}`,
             {
-                headers: { Authorization: `${apiToken}` },
+                headers: { Authorization: `Bearer ${apiToken}` },
             }
         );
 

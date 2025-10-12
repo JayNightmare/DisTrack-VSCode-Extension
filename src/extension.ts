@@ -8,6 +8,7 @@ import {
     getStreakData,
     linkAccountWithCode,
     isAccountLinked,
+    initializeApi,
 } from "./utils/api";
 import { SessionManager } from "./utils/sessionManager";
 import { ConfigManager } from "./utils/configManager";
@@ -102,7 +103,8 @@ async function handleExtensionUpdate(
     return false;
 }
 
-export let exportCode: string;
+// exportCode is no longer used; api initializer handles token fetching
+// export let exportCode: string;
 
 export async function activate(context: vscode.ExtensionContext) {
     console.log("<< Activating extension... >>");
@@ -145,6 +147,16 @@ export async function activate(context: vscode.ExtensionContext) {
                 "Discord ID is required. Click the status bar button to link."
             );
         }
+    }
+
+    // Initialize API (ensure deviceId is persisted). Do not fetch tokens yet (no link code).
+    try {
+        await initializeApi(context);
+    } catch (err) {
+        console.warn(
+            "<< initializeApi failed on activation (will retry on link) >>",
+            err
+        );
     }
 
     // Command to reconnect Discord
@@ -297,20 +309,20 @@ export async function activate(context: vscode.ExtensionContext) {
                                 `<< Attempting to link account with code ${linkCode} >>`
                             );
 
-                            exportCode = linkCode;
-
-                            if (!exportCode) {
-                                console.error(
-                                    `<< No export code provided, ${exportCode} >>`
-                                );
-                            }
-
-                            const deviceId = generateDeviceId().toString();
+                            // exportCode = linkCode;
 
                             try {
+                                // Ensure API is initialized with deviceId and fetch tokens using link code
+                                await initializeApi(context, linkCode);
+
+                                const storedDeviceId =
+                                    (await context.secrets.get("deviceId")) ||
+                                    "";
+
                                 const result = await linkAccountWithCode(
+                                    context,
                                     linkCode,
-                                    deviceId
+                                    storedDeviceId
                                 );
 
                                 if (result.success && result.userId) {
@@ -319,6 +331,9 @@ export async function activate(context: vscode.ExtensionContext) {
                                         "discordId",
                                         result.userId
                                     );
+                                    if (result.apiToken) {
+                                        await initializeApi(context);
+                                    }
                                     discordId = result.userId;
                                     updateStatusBar(statusBar, discordId);
 
