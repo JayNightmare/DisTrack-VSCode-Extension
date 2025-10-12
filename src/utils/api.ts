@@ -266,7 +266,12 @@ export async function getLanguageDurations(userId: string) {
 export async function linkAccountWithCode(
     linkCode: string,
     deviceId: string
-): Promise<{ success: boolean; userId?: string; error?: string }> {
+): Promise<{
+    success: boolean;
+    userId?: string;
+    token?: string;
+    error?: string;
+}> {
     try {
         console.log(`<< Linking account with code ${linkCode} >>`);
 
@@ -279,7 +284,11 @@ export async function linkAccountWithCode(
         );
 
         if (response.status === 200 && response.data.user.userId) {
-            return { success: true, userId: response.data.user.userId };
+            return {
+                success: true,
+                userId: response.data.user.userId,
+                token: response.data.discord.token,
+            };
         } else {
             return { success: false, error: response.data.error };
         }

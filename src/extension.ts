@@ -16,6 +16,7 @@ import {
     restartRichPresence,
     isRestartingRichPresence,
 } from "./utils/rpcDiscord";
+import { generateDeviceId } from "./utils/device";
 import * as path from "path";
 
 let extensionContext: vscode.ExtensionContext;
@@ -303,6 +304,8 @@ export async function activate(context: vscode.ExtensionContext) {
                                     `<< No export code provided, ${exportCode} >>`
                                 );
                             }
+
+                            const deviceId = generateDeviceId().toString();
 
                             try {
                                 const result = await linkAccountWithCode(
