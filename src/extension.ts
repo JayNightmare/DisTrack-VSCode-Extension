@@ -306,7 +306,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
                             try {
                                 const result = await linkAccountWithCode(
-                                    linkCode
+                                    linkCode,
+                                    deviceId
                                 );
 
                                 if (result.success && result.userId) {

@@ -9,7 +9,7 @@
 All notable changes to the "DisTrack" extension will be documented in this file.
 
 ## Patch Notes
-# v0.9.5
+# v0.9.0-v0.9.6
 * Fixed issue where user would get an error if they tried to link an account.
 * Fixed issue where metadata would not update correctly.
 * Fixed issue with vscode marketplace listing.

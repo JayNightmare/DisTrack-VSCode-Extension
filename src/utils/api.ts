@@ -27,47 +27,31 @@ async function getAPILink() {
     }
 }
 
-async function getBotToken(): Promise<string> {
+async function getTokens(deviceId: string, linkCode: string) {
     try {
-        const token = process.env.DISCORD_BOT_TOKEN?.trim();
+        const response = await axios.get(
+            `${endpointUrl}/extension/key/auth/${deviceId}/${linkCode}`
+        );
+        const token = response.data ?? "";
+
+        return token;
+    } catch (err) {
+        throw err;
+    }
+}
+
+async function getBotToken(
+    deviceId: string,
+    linkCode: string
+): Promise<string> {
+    try {
+        const token = await getTokens(deviceId, linkCode);
 
         if (!token) {
             throw new Error("Discord bot token is not configured");
         }
 
-        return token;
-        // TODO: Grab from endpoint than set it as vscode secret
-    } catch (error) {
-        vscode.window.showErrorMessage(
-            "<< Failed to read token from discord.txt >>"
-        );
-        return "";
-    }
-}
-
-async function getAPIToken(
-    deviceId: string,
-    linkCode: string
-): Promise<string> {
-    try {
-        // ? Grab from endpoint result from linking account
-        if (!deviceId) {
-            vscode.window.showErrorMessage(
-                "<< Invalid Discord ID format | Enable Developer Mode In Discord And Try Again >>"
-            );
-            return "";
-        }
-
-        const response = await axios.get(
-            `${endpointUrl}/extension/key/auth/${deviceId}/${linkCode}`
-        );
-        const token = response.data?.token ?? "";
-
-        if (!token) {
-            throw new Error("API token not found in response");
-        }
-
-        return token;
+        return token.botToken;
     } catch (error) {
         vscode.window.showErrorMessage(
             "<< Failed to read token from discord.txt >>"
@@ -89,9 +73,14 @@ generateDeviceId().then(({ id }) => {
 
 // Fetch the API token from the file
 let apiToken = "";
-getAPIToken(deviceId, exportCode).then((token) => {
-    apiToken = token;
-});
+getTokens(deviceId, exportCode)
+    .then((data) => {
+        apiToken = data.user?.linkAPIKey ?? "";
+    })
+    .catch((error) => {
+        console.error("<< Failed to fetch API token:", error);
+        apiToken = "";
+    });
 
 // Function to send session data
 export async function sendSessionData(
@@ -141,7 +130,7 @@ export async function checkAndValidateUserId(userId: string): Promise<boolean> {
     }
 
     try {
-        const botToken = await getBotToken();
+        const botToken = await getBotToken(deviceId, exportCode);
 
         const response = await axios.get(
             `https://discord.com/api/v10/users/${userId}`,
@@ -185,7 +174,7 @@ export async function getDiscordUsername(
         if (userId === null) {
             return null;
         }
-        const botToken = await getBotToken();
+        const botToken = await getBotToken(deviceId, exportCode);
 
         const response = await axios.get(
             `https://discord.com/api/v10/users/${userId}`,
@@ -275,14 +264,15 @@ export async function getLanguageDurations(userId: string) {
 
 // New function to link account with 6-digit code
 export async function linkAccountWithCode(
-    linkCode: string
+    linkCode: string,
+    deviceId: string
 ): Promise<{ success: boolean; userId?: string; error?: string }> {
     try {
         console.log(`<< Linking account with code ${linkCode} >>`);
 
         const response = await axios.post(
             `${endpointUrl}/extension/link`,
-            { linkCode },
+            { linkCode, deviceId },
             {
                 headers: { Authorization: `${apiToken}` },
             }
