@@ -1,7 +1,7 @@
 <div align=center>
   <img src="images/New Distrack.jpg" width=225 radius=10 />
 
-# DisTrack
+# DisTrack (Beta)
 ## The VSCode Leaderboard Tracker Extension
 
 
