@@ -2,7 +2,7 @@
     "name": "distrack",
     "displayName": "DisTrack",
     "description": "This extension is no longer being maintained. Use `DisTrack` instead",
-    "version": "0.9.9",
+    "version": "0.9.10",
     "publisher": "JayNightmare",
     "author": {
         "name": "Jay",
