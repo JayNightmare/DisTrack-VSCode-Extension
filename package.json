@@ -1,8 +1,8 @@
 {
     "name": "distrack",
-    "displayName": "DisTrack | Discord VSCode Tracker",
-    "description": "This will track your time in VSCode. Add the bot to your server to check your progress!",
-    "version": "0.9.8",
+    "displayName": "DisTrack",
+    "description": "This extension is no longer being maintained. Use `DisTrack` instead",
+    "version": "0.9.9",
     "publisher": "JayNightmare",
     "author": {
         "name": "Jay",
@@ -35,7 +35,7 @@
         "leaderboard",
         "discord leaderboard"
     ],
-    "homepage": "https://github.com/JayNightmare/DisTrack-VSCode-Extension#readme",
+    "homepage": "https://distrack.nexusgit.info",
     "activationEvents": [
         "onStartupFinished",
         "onCommand:extension.updateDiscordId",
